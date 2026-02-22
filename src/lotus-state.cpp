@@ -32,6 +32,43 @@ namespace fcitx {
 
 #include <thread>
 
+
+#include <iomanip>
+#include <sstream>
+#include <fstream>
+
+std::string escapeString(const std::string& str) {
+    std::string result;
+    result.reserve(str.size());
+    for (unsigned char c : str) {
+        if (c >= 32 && c < 127) {
+            result += c;
+        } else {
+            char buf[10];
+            std::snprintf(buf, sizeof(buf), "\\x%02x", c);
+            result += buf;
+        }
+    }
+    return result;
+}
+
+void logToFile(const std::string& function, int line, const std::string& message) {
+    static std::ofstream logFile("/tmp/lotus_debug.log", std::ios::app);
+    if (!logFile.is_open()) {
+        return;
+    }
+
+    auto now  = std::chrono::system_clock::now();
+    auto time = std::chrono::system_clock::to_time_t(now);
+    auto ms   = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+
+    logFile << std::put_time(std::localtime(&time), "%H:%M:%S") << "." << std::setfill('0') << std::setw(3) << ms.count() << " [" << function << ":" << line << "] " << message
+            << std::endl;
+    logFile.flush();
+}
+
+#define LOG(msg) logToFile(__func__, __LINE__, msg)
+
 namespace fcitx {
 
     FCITX_DEFINE_LOG_CATEGORY(lotus, "lotus");
@@ -155,6 +192,13 @@ namespace fcitx {
 
         int cursor = s.cursor();
         int anchor = s.anchor();
+        const auto& text    = s.text();
+        size_t      textLen = fcitx_utf8_strlen(text.c_str());
+
+        LOG("text=\""+escapeString(text)+"\"");
+        LOG("textL="+std::to_string(textLen));
+        LOG("cur="+std::to_string(cursor));
+        LOG("real="+std::to_string(realtextLen));
 
         if (cursor != anchor) {
             int selectionStart = std::min(anchor, cursor);
@@ -165,16 +209,33 @@ namespace fcitx {
             }
         }
 
-        const auto& text    = s.text();
-        size_t      textLen = fcitx_utf8_strlen(text.c_str());
+
+        // Guard?
+        if (textLen <= static_cast<size_t>(realtextLen))
+            realtextLen = textLen;
 
         if (textLen == static_cast<size_t>(cursor)) {
             realtextLen = textLen;
             return false;
         }
 
-        if (textLen - 1 > static_cast<size_t>(cursor) && cursor == realtextLen)
-            return true;
+        // Text exists after cursor AND cursor is exactly where we expected
+        // (realtextLen tracks where cursor should be after our last commit).
+        // This is the only reliable signal that the app appended a suggestion.
+        // why -1?? cuz some SurroundingText is only update on event
+        // so when u type "12345" surronding text is "1234" it will
+        // update to "12345" when next u type "6" so this will make
+        // work correctly when cursor in the middle of the string
+        // Failed with:
+        //              a.com[/] + 's' -> a.coóm // Bad
+        //              a.co[m/] + 's' -> a.có   // Good
+        if (textLen - 1 > static_cast<size_t>(cursor) && cursor == realtextLen) {
+            LOG("SUGGEST");
+            if (text.find('\n', cursor) == std::string::npos) {
+                LOG("YAY");
+                return true;
+            }
+        }
 
         if (realtextLen < cursor)
             realtextLen = cursor;
@@ -459,6 +520,12 @@ namespace fcitx {
         current_backspace_count_ = 0;
         pending_commit_string_   = addedPart;
         const auto& surrounding  = ic_->surroundingText();
+        const auto& text    = surrounding.text();
+
+        LOG("text=\""+escapeString(text)+"\"");
+        LOG("real="+std::to_string(realtextLen));
+        LOG("cur="+std::to_string(surrounding.cursor()));
+
         expected_backspaces_     = utf8::length(deletedPart) + 1 + (isAutofillCertain(surrounding) ? 1 : 0);
         replacement_thread_id_.store(my_id, std::memory_order_release);
         replacement_start_ms_.store(now_ms(), std::memory_order_release);
@@ -468,6 +535,9 @@ namespace fcitx {
     }
 
     void LotusState::checkForwardSpecialKey(KeyEvent& keyEvent, KeySym& currentSym) {
+        const auto& text    = (ic_->surroundingText()).text();
+        LOG("text=\""+escapeString(text)+"\"");
+        LOG("real="+std::to_string(realtextLen));
         if (keyEvent.key().isCursorMove() || currentSym == FcitxKey_Tab || currentSym == FcitxKey_KP_Tab || currentSym == FcitxKey_ISO_Left_Tab || currentSym == FcitxKey_Escape ||
             keyEvent.key().hasModifier()) {
             history_.clear();
@@ -525,10 +595,15 @@ namespace fcitx {
 
     void LotusState::handleUinputMode(KeyEvent& keyEvent, KeySym currentSym, bool checkEmptyPreedit, int sleepTime) {
         checkForwardSpecialKey(keyEvent, currentSym);
+        auto text    = (ic_->surroundingText()).text();
+        LOG("text=\""+escapeString(text)+"\"");
+        LOG("real="+std::to_string(realtextLen));
+
         if (is_deleting_.load(std::memory_order_acquire)) {
             if (isBackspace(currentSym)) {
                 if (realtextLen > 0)
                     realtextLen -= 1;
+                LOG("real="+std::to_string(realtextLen));
                 if (handleUInputKeyPress(keyEvent, currentSym, sleepTime)) {
                     return;
                 }
@@ -543,6 +618,9 @@ namespace fcitx {
         }
 
         if (isBackspace(currentSym) || currentSym == FcitxKey_Return) {
+            text    = (ic_->surroundingText()).text();
+            LOG("text=\""+escapeString(text)+"\"");
+            LOG("real="+std::to_string(realtextLen));
             if (isBackspace(currentSym)) {
                 history_.push_back('\b');
                 replayBufferToEngine(history_);
@@ -599,6 +677,9 @@ namespace fcitx {
 
         history_ += keyUtf8;
         realtextLen += 1;
+        text    = (ic_->surroundingText()).text();
+        LOG("text=\""+escapeString(text)+"\"");
+        LOG("real="+std::to_string(realtextLen));
 
         replayBufferToEngine(history_);
 
@@ -771,6 +852,12 @@ namespace fcitx {
     }
 
     void LotusState::keyEvent(KeyEvent& keyEvent) {
+        auto text    = (ic_->surroundingText()).text();
+        const size_t textLen = fcitx_utf8_strlen(text.c_str());
+        LOG("text=\""+escapeString(text)+"\"");
+        if (textLen < realtextLen)
+            realtextLen = textLen;
+
         if (!lotusEngine_ || keyEvent.isRelease())
             return;
         if (uinput_client_fd_ < 0) {
@@ -834,13 +921,17 @@ namespace fcitx {
                 break;
             }
         }
+        text    = (ic_->surroundingText()).text();
+        LOG("text=\""+escapeString(text)+"\"");
+        LOG("real="+std::to_string(realtextLen));
     }
 
     void LotusState::reset() {
-        const auto& surrounding = ic_->surroundingText();
-        const auto& text        = surrounding.text();
-        size_t      textLen     = fcitx_utf8_strlen(text.c_str());
-        realtextLen             = textLen;
+        const auto& text    = (ic_->surroundingText()).text();
+        const size_t textLen     = utf8::length(text);
+        realtextLen              = textLen;
+        LOG("text=\""+escapeString(text)+"\"");
+        LOG("real="+std::to_string(realtextLen));
         if (is_deleting_.load(std::memory_order_acquire)) {
             return;
         }
@@ -902,6 +993,9 @@ namespace fcitx {
             case LotusMode::Uinput:
             case LotusMode::UinputHC:
             case LotusMode::Smooth: {
+                const auto& text    = (ic_->surroundingText()).text();
+                LOG("text=\""+escapeString(text)+"\"");
+                LOG("real="+std::to_string(realtextLen));
                 if (lotusEngine_) {
                     UniqueCPtr<char> preedit(EnginePullPreedit(lotusEngine_.handle()));
                     if (preedit && preedit.get()[0]) {
