@@ -601,10 +601,10 @@ namespace fcitx {
         state->keyEvent(keyEvent);
         const auto& s       = ic->surroundingText();
         const auto& text    = s.text();
-        size_t      textLen = fcitx_utf8_strlen(text.c_str());
-        int         cursor  = s.cursor();
+        const size_t      textLen = fcitx_utf8_strlen(text.c_str());
+        const int         cursor  = s.cursor();
         if (textLen == static_cast<size_t>(cursor))
-            realtextLen = static_cast<int>(textLen);
+            realtextLen = cursor;
     }
 
     void LotusEngine::reset(const InputMethodEntry& entry, InputContextEvent& event) {
