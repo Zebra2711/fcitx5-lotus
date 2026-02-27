@@ -176,8 +176,11 @@ namespace fcitx {
             }
         }
 
-        if (waitAck_) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(count * 5));
+        if (waitAck) {
+            char ack;
+            recv(uinput_client_fd_, &ack, sizeof(ack), MSG_NOSIGNAL);
+            //std::this_thread::sleep_for(std::chrono::milliseconds(count * 12));
+            replacement_start_ms_.store(0, std::memory_order_release);
         }
     }
 
@@ -236,13 +239,17 @@ namespace fcitx {
         }
 
 
-        // Guard?
-        if (textLen <= static_cast<size_t>(realtextLen))
-            realtextLen = textLen;
 
         if (textLen == static_cast<size_t>(cursor)) {
             realtextLen = textLen;
             return false;
+        }
+
+        // Guard?
+        if (textLen < static_cast<size_t>(realtextLen)){
+            realtextLen = textLen;
+            // add more char but textLen not change
+            // return true;
         }
 
         // Text exists after cursor AND cursor is exactly where we expected
@@ -262,6 +269,7 @@ namespace fcitx {
                 return true;
             }
         }
+
 
         if (realtextLen < cursor)
             realtextLen = cursor;
@@ -562,10 +570,14 @@ namespace fcitx {
 
     void LotusState::checkForwardSpecialKey(KeyEvent& keyEvent, KeySym& currentSym) {
         const auto& text    = (ic_->surroundingText()).text();
+        const size_t textLen = fcitx_utf8_strlen(text.c_str());
         LOG("text=\""+escapeString(text)+"\"");
         LOG("real="+std::to_string(realtextLen));
         if (keyEvent.key().isCursorMove() || currentSym == FcitxKey_Tab || currentSym == FcitxKey_KP_Tab || currentSym == FcitxKey_ISO_Left_Tab || currentSym == FcitxKey_Escape ||
             keyEvent.key().hasModifier()) {
+            realtextLen = static_cast<int>(textLen);
+            LOG("real="+std::to_string(realtextLen));
+            LOG("textL="+std::to_string(textLen));
             history_.clear();
             ResetEngine(lotusEngine_.handle());
             oldPreBuffer_.clear();
@@ -731,7 +743,7 @@ namespace fcitx {
                     oldPreBuffer_ = preeditStr;
                 }
             } else {
-                if (uinput_client_fd_ < 0) {
+                if (uinput_client_fd_ < 0 && ic_->surroundingText().isValid()) {
                     std::string rawKey = keyEvent.key().toString();
                     if (!rawKey.empty()) {
                         ic_->commitString(rawKey);
@@ -887,9 +899,11 @@ namespace fcitx {
         auto text    = (ic_->surroundingText()).text();
         const size_t textLen = fcitx_utf8_strlen(text.c_str());
         LOG("text=\""+escapeString(text)+"\"");
-        if (textLen < static_cast<size_t>(realtextLen))
-            realtextLen = static_cast<int>(textLen);
-
+        if (textLen < static_cast<size_t>(realtextLen)) {
+            // realtextLen = static_cast<int>(textLen);
+            LOG("real="+std::to_string(realtextLen));
+            LOG("textL="+std::to_string(textLen));
+        }
         if (!lotusEngine_ || keyEvent.isRelease())
             return;
         if (uinput_client_fd_ < 0) {
@@ -980,6 +994,7 @@ namespace fcitx {
             ResetEngine(lotusEngine_.handle());
         }
 
+        LOG("CLEAR BUFFER");
         clearAllBuffers();
 
         switch (realMode) {

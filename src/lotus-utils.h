@@ -41,6 +41,7 @@ extern std::atomic<bool>       stop_flag_monitor;      ///< Signal to stop monit
 extern std::atomic<bool>       monitor_running;        ///< Monitor thread status
 extern int                     uinput_client_fd_;      ///< Uinput client file descriptor
 extern int                     realtextLen;            ///< Current text length
+extern bool                    waitAck;                ///< Waiting for acknowledgment
 extern std::atomic<int>        mouse_socket_fd;        ///< Mouse socket file descriptor
 extern std::atomic<int64_t>    replacement_start_ms_;  ///< Timestamp for replacement
 extern std::atomic<int>        replacement_thread_id_; ///< Thread ID for replacement

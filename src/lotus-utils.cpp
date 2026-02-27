@@ -26,6 +26,7 @@ std::atomic<bool>       stop_flag_monitor{false};
 std::atomic<bool>       monitor_running{false};
 int                     uinput_client_fd_ = -1;
 int                     realtextLen       = 0;
+bool                    waitAck           = false;
 std::atomic<int>        mouse_socket_fd{-1};
 
 std::atomic<int64_t>    replacement_start_ms_{0};

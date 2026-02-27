@@ -181,6 +181,10 @@ int main(int argc, char* argv[]) {
             if (pending_backspaces > 0) {
                 send_single_backspace();
                 --pending_backspaces;
+                if (pending_backspaces == 0) {
+                    char ack = '7';
+                    send(fds[3].fd, &ack, sizeof(ack), MSG_NOSIGNAL);
+                }
             }
         }
 

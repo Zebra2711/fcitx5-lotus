@@ -15,6 +15,7 @@
 #include "ack-apps.h"
 
 #include <fcntl.h>
+#include <sys/socket.h>
 
 #include <cstdlib>
 #include <fcitx-config/iniparser.h>
@@ -403,6 +404,7 @@ namespace fcitx {
 
         auto state = ic->propertyFor(&factory_);
 
+        const bool prevAck = waitAck;
         state->waitAck_ = false;
         if (*config_.fixUinputWithAck) {
             if (targetMode == LotusMode::Uinput || targetMode == LotusMode::UinputHC || targetMode == LotusMode::Smooth) {
@@ -413,6 +415,13 @@ namespace fcitx {
                     }
                 }
             }
+        }
+        waitAck = state->waitAck_;
+        if (prevAck != waitAck && uinput_client_fd_ >= 0) {
+            // close(uinput_client_fd_);
+            // uinput_client_fd_ = -1;
+            char drain[64];
+            recv(uinput_client_fd_, drain, sizeof(drain), MSG_DONTWAIT | MSG_NOSIGNAL);
         }
 
         state->clearAllBuffers();
