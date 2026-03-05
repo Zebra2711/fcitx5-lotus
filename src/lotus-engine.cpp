@@ -16,6 +16,7 @@
 #include "lotus-version.h"
 
 #include <algorithm>
+#include <fcitx-utils/i18n.h>
 #include <fcntl.h>
 
 #include <cstdlib>
@@ -924,7 +925,7 @@ namespace fcitx {
         FCITX_UNUSED(entry);
         FCITX_UNUSED(inputContext);
         switch (realMode) {
-            case LotusMode::Off: return "Lotus - Off";
+            case LotusMode::Off: return _("Lotus - Off");
             case LotusMode::Emoji: return "😄";
             default: return "🪷";
         }
