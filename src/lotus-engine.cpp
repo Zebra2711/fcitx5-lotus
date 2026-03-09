@@ -26,7 +26,6 @@
 #include <fcntl.h>
 
 namespace fcitx {
-    constexpr const char*     InputMethodActionPrefix = "lotus-input-method-";
     constexpr const char*     CharsetActionPrefix     = "lotus-charset-";
     constexpr const char*     MacroPrefix             = "macro/";
     const std::string         CustomKeymapFile        = "conf/lotus-custom-keymap.conf";
@@ -98,61 +97,6 @@ namespace fcitx {
         versionAction_->setIcon("help-about");
         uiManager.registerAction("lotus-version", versionAction_.get());
 
-        modeAction_ = std::make_unique<SimpleAction>();
-        modeAction_->setIcon("preferences-system");
-        modeAction_->setShortText(_("Typing Mode"));
-        uiManager.registerAction("lotus-mode", modeAction_.get());
-        modeMenu_ = std::make_unique<Menu>();
-        modeAction_->setMenu(modeMenu_.get());
-
-        std::vector<LotusMode> modes = {LotusMode::Smooth, LotusMode::Uinput, LotusMode::SurroundingText, LotusMode::Preedit, LotusMode::UinputHC, LotusMode::Off};
-        for (const auto& mode : modes) {
-            auto action = std::make_unique<SimpleAction>();
-            action->setShortText(modeEnumToString(mode));
-            action->setCheckable(true);
-            uiManager.registerAction("lotus-mode-" + modeEnumToString(mode), action.get());
-            connections_.emplace_back(action->connect<SimpleAction::Activated>([this, mode](InputContext* ic) {
-                if (globalMode_ == mode) {
-                    return;
-                }
-
-                config_.mode.setValue(modeEnumToString(mode));
-                saveConfig();
-                setMode(mode, ic);
-                globalMode_ = mode;
-                reloadConfig();
-                updateModeAction(ic);
-            }));
-            modeMenu_->addAction(action.get());
-            modeSubAction_.push_back(std::move(action));
-        }
-
-        inputMethodAction_ = std::make_unique<SimpleAction>();
-        inputMethodAction_->setIcon("document-edit");
-        inputMethodAction_->setShortText("Input Method");
-        uiManager.registerAction("lotus-input-method", inputMethodAction_.get());
-        inputMethodMenu_ = std::make_unique<Menu>();
-        inputMethodAction_->setMenu(inputMethodMenu_.get());
-
-        for (const auto& imName : imNames_) {
-            inputMethodSubAction_.emplace_back(std::make_unique<SimpleAction>());
-            auto action = inputMethodSubAction_.back().get();
-            action->setShortText(imName);
-            action->setCheckable(true);
-            uiManager.registerAction(stringutils::concat(InputMethodActionPrefix, imName), action);
-            connections_.emplace_back(action->connect<SimpleAction::Activated>([this, imName](InputContext* ic) {
-                if (config_.inputMethod.value() == imName)
-                    return;
-                config_.inputMethod.setValue(imName);
-                saveConfig();
-                refreshEngine();
-                updateInputMethodAction(ic);
-                if (ic)
-                    ic->updateUserInterface(UserInterfaceComponent::StatusArea);
-            }));
-            inputMethodMenu_->addAction(action);
-        }
-
         charsetAction_ = std::make_unique<SimpleAction>();
         charsetAction_->setShortText(_("Charset"));
         charsetAction_->setIcon("character-set");
@@ -187,17 +131,9 @@ namespace fcitx {
                          uiManager);
         initToggleAction(autoNonVnRestoreAction_, config_.autoNonVnRestore, "lotus-autonvnrestore", "edit-undo", _("Auto restore keys with invalid words"),
                          _("Auto Non-VN Restore"), uiManager);
-        initToggleAction(modernStyleAction_, config_.modernStyle, "lotus-modernstyle", "text-x-generic", _("Use oà, _uý (instead of òa, úy)"), _("Modern Style"), uiManager);
-        initToggleAction(freeMarkingAction_, config_.freeMarking, "lotus-freemarking", "document-open-recent", _("Allow type with more freedom"), _("Free Marking"), uiManager);
-        initToggleAction(ddFreeStyleAction_, config_.ddFreeStyle, "lotus-ddfreestyle", "text-x-generic", _("Allow dd to produce đ when Auto non-VN restore is On"), _("Dd -> Đ"),
-                         uiManager);
-        initToggleAction(fixUinputWithAckAction_, config_.fixUinputWithAck, "lotus-fixuinputwithack", "network-transmit-receive", _("Fix uinput mode with ack"),
-                         _("Fix Uinput With Ack"), uiManager);
-        initToggleAction(lotusIconsAction_, config_.useLotusIcons, "lotus-icons", "emblem-default", _("Use Lotus status icons"), _("Lotus Icons"), uiManager);
 
         reloadConfig();
         globalMode_ = modeStringToEnum(config_.mode.value());
-        updateModeAction(nullptr);
         instance_->inputContextManager().registerProperty("LotusState", &factory_);
 
 #if LOTUS_USE_MODERN_FCITX_API
@@ -211,12 +147,7 @@ namespace fcitx {
         }
         appRulesPath_ = configDir + "/lotus-app-rules.conf";
         loadAppRules();
-        toggleActions_ = {
-            versionAction_.get(),     modeAction_.get(),        inputMethodAction_.get(),     charsetAction_.get(),
-            spellCheckAction_.get(),  macroAction_.get(),       capitalizeMacroAction_.get(), autoNonVnRestoreAction_.get(),
-            modernStyleAction_.get(), freeMarkingAction_.get(), ddFreeStyleAction_.get(),     fixUinputWithAckAction_.get(),
-            lotusIconsAction_.get(),
-        };
+        toggleActions_ = {versionAction_.get(), charsetAction_.get(), spellCheckAction_.get(), macroAction_.get(), capitalizeMacroAction_.get(), autoNonVnRestoreAction_.get()};
     }
 
     void LotusEngine::initToggleAction(std::unique_ptr<SimpleAction>& action, Option<bool>& option, const std::string& actionId, const std::string& iconName,
@@ -224,7 +155,7 @@ namespace fcitx {
         action = std::make_unique<SimpleAction>();
         action->setShortText(textLong);
         action->setIcon(iconName);
-        action->setCheckable(true);
+        action->setCheckable(false);
         connections_.emplace_back(action->connect<SimpleAction::Activated>([this, &action, &option, textOnOff](InputContext* ic) {
             option.setValue(!option.value());
             saveConfig();
@@ -235,8 +166,7 @@ namespace fcitx {
     }
 
     void LotusEngine::updateAction(InputContext* ic, std::unique_ptr<SimpleAction>& action, Option<bool>& option, const std::string& textOnOff) {
-        action->setChecked(option.value());
-        action->setShortText(textOnOff + (option.value() ? _(": On") : _(": Off")));
+        action->setShortText(textOnOff + (option.value() ? " ✅" : " ❌"));
         if (ic) {
             action->update(ic);
         }
@@ -286,18 +216,11 @@ namespace fcitx {
     void LotusEngine::populateConfig() {
         refreshEngine();
         refreshOption();
-        updateModeAction(nullptr);
-        updateInputMethodAction(nullptr);
         updateCharsetAction(nullptr);
         updateAction(nullptr, spellCheckAction_, config_.spellCheck, _("Spell Check"));
         updateAction(nullptr, macroAction_, config_.macro, _("Macro"));
         updateAction(nullptr, capitalizeMacroAction_, config_.capitalizeMacro, _("Capitalize Macro"));
         updateAction(nullptr, autoNonVnRestoreAction_, config_.autoNonVnRestore, _("Auto Non-VN Restore"));
-        updateAction(nullptr, modernStyleAction_, config_.modernStyle, _("Modern Style"));
-        updateAction(nullptr, freeMarkingAction_, config_.freeMarking, _("Free Marking"));
-        updateAction(nullptr, ddFreeStyleAction_, config_.ddFreeStyle, _("Dd -> Đ"));
-        updateAction(nullptr, fixUinputWithAckAction_, config_.fixUinputWithAck, _("Fix Uinput With Ack"));
-        updateAction(nullptr, lotusIconsAction_, config_.useLotusIcons, _("Lotus Icons"));
     }
 
     void LotusEngine::setSubConfig(const std::string& path, const RawConfig& config) {
@@ -349,8 +272,6 @@ namespace fcitx {
         }
         LOTUS_INFO("Target mode: " + modeEnumToString(targetMode));
         reloadConfig();
-        updateModeAction(event.inputContext());
-        updateInputMethodAction(event.inputContext());
         updateCharsetAction(event.inputContext());
 
         setMode(targetMode, event.inputContext());
@@ -597,37 +518,6 @@ namespace fcitx {
                 state->reset();
             return true;
         });
-    }
-
-    void LotusEngine::updateModeAction(InputContext* ic) {
-        std::string currentModeStr = config_.mode.value();
-        LotusMode   newMode        = modeStringToEnum(currentModeStr);
-        globalMode_                = newMode;
-        setMode(newMode, ic);
-
-        for (const auto& action : modeSubAction_) {
-            action->setChecked(action->name() == "lotus-mode-" + currentModeStr);
-            if (ic)
-                action->update(ic);
-        }
-        modeAction_->setLongText(_("Typing Mode: ") + currentModeStr);
-
-        if (ic) {
-            modeAction_->update(ic);
-        }
-    }
-
-    void LotusEngine::updateInputMethodAction(InputContext* ic) {
-        auto name = stringutils::concat(InputMethodActionPrefix, *config_.inputMethod);
-        for (const auto& action : inputMethodSubAction_) {
-            action->setChecked(action->name() == name);
-            if (ic)
-                action->update(ic);
-        }
-        if (ic) {
-            inputMethodAction_->setLongText(stringutils::concat("Input Method: ", *config_.inputMethod));
-            inputMethodAction_->update(ic);
-        }
     }
 
     void LotusEngine::updateCharsetAction(InputContext* ic) {

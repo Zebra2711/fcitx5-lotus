@@ -191,12 +191,7 @@ namespace fcitx {
         FactoryFor<LotusState>                           factory_;
         std::vector<std::string>                         imNames_;
 
-        std::unique_ptr<SimpleAction>                    inputMethodAction_;
-        std::vector<std::unique_ptr<SimpleAction>>       inputMethodSubAction_;
-        std::unique_ptr<Menu>                            inputMethodMenu_;
-        std::unique_ptr<SimpleAction>                    modeAction_;
-        std::unique_ptr<Menu>                            modeMenu_;
-        std::vector<std::unique_ptr<SimpleAction>>       modeSubAction_;
+        std::unique_ptr<SimpleAction>                    versionAction_;
         std::unique_ptr<SimpleAction>                    charsetAction_;
         std::vector<std::unique_ptr<SimpleAction>>       charsetSubAction_;
         std::unique_ptr<Menu>                            charsetMenu_;
@@ -205,12 +200,6 @@ namespace fcitx {
         std::unique_ptr<SimpleAction>                    macroAction_;
         std::unique_ptr<SimpleAction>                    capitalizeMacroAction_;
         std::unique_ptr<SimpleAction>                    autoNonVnRestoreAction_;
-        std::unique_ptr<SimpleAction>                    modernStyleAction_;
-        std::unique_ptr<SimpleAction>                    freeMarkingAction_;
-        std::unique_ptr<SimpleAction>                    ddFreeStyleAction_;
-        std::unique_ptr<SimpleAction>                    fixUinputWithAckAction_;
-        std::unique_ptr<SimpleAction>                    lotusIconsAction_;
-        std::unique_ptr<SimpleAction>                    versionAction_;
         std::vector<SimpleAction*>                       toggleActions_;
         std::vector<ScopedConnection>                    connections_;
         CGoObject                                        dictionary_;
@@ -260,18 +249,6 @@ namespace fcitx {
          * @param textOnOff The text to display when on/off
          */
         void updateAction(InputContext* ic, std::unique_ptr<SimpleAction>& action, Option<bool>& option, const std::string& textOnOff);
-
-        /**
-         * @brief Updates the mode action UI.
-         * @param ic Current input context.
-         */
-        void updateModeAction(InputContext* ic);
-
-        /**
-         * @brief Updates the input method action UI.
-         * @param ic Current input context.
-         */
-        void updateInputMethodAction(InputContext* ic);
 
         /**
          * @brief Updates the charset action UI.
