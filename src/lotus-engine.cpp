@@ -26,9 +26,9 @@
 #include <fcntl.h>
 
 namespace fcitx {
-    constexpr const char*     CharsetActionPrefix = "lotus-charset-";
-    constexpr const char*     MacroPrefix         = "macro/";
-    const std::string         CustomKeymapFile    = "conf/lotus-custom-keymap.conf";
+    constexpr const char* CharsetActionPrefix = "lotus-charset-";
+    constexpr const char* MacroPrefix         = "macro/";
+    const std::string     CustomKeymapFile    = "conf/lotus-custom-keymap.conf";
 
     // Returns the KeySym that triggers the "Type hotkey char" action in the mode
     // menu.  If the hotkey itself conflicts with a reserved menu key, falls back
