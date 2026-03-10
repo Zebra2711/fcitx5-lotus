@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  */
-
+#ifdef LOTUS_DEBUG
 #include "lotus-logger.h"
 
 #include <cstddef>
@@ -123,3 +123,4 @@ std::string LotusLogger::levelToString(LogLevel level) {
         default: return "UNKNOWN";
     }
 }
+#endif // LOTUS_DEBUG

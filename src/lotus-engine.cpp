@@ -24,6 +24,7 @@
 #include <fstream>
 
 #include <fcntl.h>
+#include "debug.h"
 
 namespace fcitx {
     constexpr const char* CharsetActionPrefix = "lotus-charset-";
@@ -281,7 +282,9 @@ namespace fcitx {
 
     void LotusEngine::activate(const InputMethodEntry& entry, InputContextEvent& event) {
         FCITX_UNUSED(entry);
-        auto*                    ic = event.inputContext();
+        auto* ic = event.inputContext();
+        LOG("frontend: " + std::string(ic->frontend()));
+        std::string              isdbus = std::string(ic->frontend());
         static std::atomic<bool> mouseThreadStarted{false};
         if (!mouseThreadStarted.exchange(true))
             startMouseReset();
@@ -311,17 +314,24 @@ namespace fcitx {
 #else
                 std::transform(appName.begin(), appName.end(), appName.begin(), ::tolower);
 #endif
-                for (const auto& ackApp : ack_apps) {
-                    if (appName.find(ackApp) != std::string::npos) {
-                        state->waitAck_ = true;
-                        LOTUS_INFO(ackApp + " detected, waiting for ack");
-                        break;
+                LOG("app \"" + appName + "\"");
+                if (std::string(ic->frontend()) == "dbus")
+                    for (const auto& ackApp : ack_apps) {
+                        if (appName.find(ackApp) != std::string::npos) {
+                            state->waitAck_ = true;
+                            LOG("FCKED \"" + ackApp + "\"");
+                            LOTUS_INFO(ackApp + " detected, waiting for ack");
+                            break;
+                        }
                     }
-                }
             }
         }
-
-        state->clearAllBuffers();
+        LOG("activate event type: " + std::to_string(static_cast<uint32_t>(event.type())));
+        if (event.type() == EventType::InputContextFocusIn && isdbus == "dbus") {
+            ;
+        } else {
+            state->clearAllBuffers();
+        }
         is_deleting_.store(false);
         needEngineReset.store(false);
         ic->inputPanel().reset();
@@ -341,6 +351,7 @@ namespace fcitx {
             ic->inputPanel().reset();
             ic->updateUserInterface(UserInterfaceComponent::InputPanel);
             auto* state = ic->propertyFor(&factory_);
+            LOG("reset");
             state->reset();
         }
 
@@ -487,6 +498,7 @@ namespace fcitx {
                 ic->inputPanel().reset();
                 ic->updateUserInterface(UserInterfaceComponent::InputPanel);
                 auto* state = ic->propertyFor(&factory_);
+                LOG("reset");
                 state->reset();
             }
             return;
@@ -519,20 +531,33 @@ namespace fcitx {
         }
 
         if (event.type() == EventType::InputContextFocusOut) {
+            LOG("reset");
             state->reset();
         }
     }
 
     void LotusEngine::deactivate(const InputMethodEntry& entry, InputContextEvent& event) {
         FCITX_UNUSED(entry);
+        auto        ic     = event.inputContext();
+        std::string isdbus = std::string(ic->frontend());
+        LOG("Frontend: " + std::string(ic->frontend()));
         auto* state = event.inputContext()->propertyFor(&factory_);
         if (realMode == LotusMode::Preedit) {
             if (event.type() != EventType::InputContextFocusOut)
                 state->commitBuffer();
-            else
+            else {
+                LOG("reset");
                 state->reset();
+            }
         } else {
-            state->clearAllBuffers();
+            LOG("Deactivate event type: " + std::to_string(static_cast<uint32_t>(event.type())));
+            if (event.type() == EventType::InputContextFocusOut && isdbus == "dbus") {
+                ;
+            } else {
+                LOG("clearAllBuffers");
+                state->clearAllBuffers();
+            }
+
             is_deleting_.store(false);
             needEngineReset.store(false);
             event.inputContext()->inputPanel().reset();
@@ -547,8 +572,10 @@ namespace fcitx {
         instance_->inputContextManager().foreach ([this](InputContext* ic) {
             auto* state = ic->propertyFor(&factory_);
             state->setEngine();
-            if (ic->hasFocus())
+            if (ic->hasFocus()) {
+                LOG("reset");
                 state->reset();
+            }
             return true;
         });
     }
@@ -559,8 +586,10 @@ namespace fcitx {
         instance_->inputContextManager().foreach ([this](InputContext* ic) {
             auto* state = ic->propertyFor(&factory_);
             state->setOption();
-            if (ic->hasFocus())
+            if (ic->hasFocus()) {
+                LOG("reset");
                 state->reset();
+            }
             return true;
         });
     }
@@ -632,6 +661,7 @@ namespace fcitx {
             ic->inputPanel().reset();
             ic->updateUserInterface(UserInterfaceComponent::InputPanel);
             auto* state = ic->propertyFor(&factory_);
+            LOG("reset");
             state->reset();
         };
 
