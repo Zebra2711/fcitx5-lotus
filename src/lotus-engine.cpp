@@ -527,25 +527,8 @@ namespace fcitx {
         FCITX_UNUSED(entry);
         auto* ic    = event.inputContext();
         auto* state = ic->propertyFor(&factory_);
-        if (realMode == LotusMode::Preedit) {
-            if (event.type() != EventType::InputContextFocusOut) {
-                state->commitBuffer();
-            } else {
-                // On FocusOut in Preedit mode, do NOT commit the preedit string.
-                // When using client-side preedit (setClientPreedit), the text is rendered
-                // inline inside the client application (e.g. browser). By the time FocusOut
-                // fires and the Wayland/X11 focus has already moved to the new field,
-                // calling ic_->commitString() causes the preedit text to be delivered to
-                // the newly focused field instead of the original one, producing duplicated
-                // or misplaced text. Simply clear the preedit display and internal state;
-                // the client handles preedit cancellation on focus loss.
-                ic->inputPanel().reset();
-                ic->updateUserInterface(UserInterfaceComponent::InputPanel);
-                ic->updatePreedit();
-                state->clearAllBuffers();
-                is_deleting_.store(false);
-                needEngineReset.store(false);
-            }
+        if (realMode == LotusMode::Preedit && event.type() != EventType::InputContextFocusOut) {
+            state->commitBuffer();
         } else {
             state->clearAllBuffers();
             is_deleting_.store(false);
