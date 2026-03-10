@@ -9,7 +9,6 @@
 #include "lotus-server.h"
 #include "lotus-logger.h"
 
-#include <cstring>
 #include <vector>
 
 #include <signal.h>
@@ -38,48 +37,6 @@ void FdGuard::reset(int new_fd) {
     if (fd_ >= 0)
         close(fd_);
     fd_ = new_fd;
-}
-
-UinputDevice::~UinputDevice() {
-    if (guard_.is_valid()) {
-        ioctl(guard_.get(), UI_DEV_DESTROY);
-    }
-}
-
-bool UinputDevice::initialize() {
-    int fd = open("/dev/uinput", O_WRONLY);
-    if (fd < 0)
-        return false;
-    guard_.reset(fd);
-
-    if (ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0 || ioctl(fd, UI_SET_KEYBIT, KEY_BACKSPACE) < 0) {
-        return false;
-    }
-
-    struct uinput_setup usetup{};
-    usetup.id.bustype = BUS_USB;
-    usetup.id.vendor  = 0x1234;
-    usetup.id.product = 0x5678;
-    strncpy(usetup.name, "Lotus-Uinput-Server", UINPUT_MAX_NAME_SIZE - 1);
-
-    if (ioctl(fd, UI_DEV_SETUP, &usetup) < 0 || ioctl(fd, UI_DEV_CREATE) < 0) {
-        return false;
-    }
-    sleep(1);
-    return true;
-}
-
-void UinputDevice::send_backspace() {
-    if (!guard_.is_valid())
-        return;
-    struct input_event ev[4]{};
-    ev[0].type  = EV_KEY;
-    ev[0].code  = KEY_BACKSPACE;
-    ev[0].value = 1; // Press
-    ev[2].type  = EV_KEY;
-    ev[2].code  = KEY_BACKSPACE;
-    ev[2].value = 0; // Release
-    write(guard_.get(), ev, sizeof(ev));
 }
 
 LibinputContext::LibinputContext(const struct libinput_interface* interface) : udev_(udev_new()) {
@@ -153,12 +110,6 @@ int main(int argc, char* argv[]) {
     boost_process_priority();
     pin_to_pcore();
 
-    std::string backspace_socket;
-    backspace_socket.reserve(40);
-    backspace_socket += "lotussocket-";
-    backspace_socket += target_user;
-    backspace_socket += "-kb_socket";
-
     std::string mouse_flag_socket;
     mouse_flag_socket.reserve(48);
     mouse_flag_socket += "lotussocket-";
@@ -166,45 +117,22 @@ int main(int argc, char* argv[]) {
     mouse_flag_socket += "-mouse_socket";
 
     const size_t max_socket_path_length = UNIX_PATH_MAX - 1;
-    backspace_socket.resize(std::min(backspace_socket.length(), max_socket_path_length));
     mouse_flag_socket.resize(std::min(mouse_flag_socket.length(), max_socket_path_length));
 
-    // Setup Uinput
-    UinputDevice uinput;
-    if (!uinput.initialize()) {
-        LotusLogger::instance().error("Failed to initialize uinput device");
-        return 1;
-    }
-
-    FdGuard            server_fd(socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0));
     FdGuard            mouse_server_fd(socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0));
 
-    struct sockaddr_un addr_kb{};
     struct sockaddr_un addr_mouse{};
-
-    addr_kb.sun_family    = AF_UNIX;
-    addr_mouse.sun_family = AF_UNIX;
-
-    addr_kb.sun_path[0]    = '\0';
+    addr_mouse.sun_family  = AF_UNIX;
     addr_mouse.sun_path[0] = '\0';
-
-    memcpy(&addr_kb.sun_path[1], backspace_socket.c_str(), backspace_socket.length());
     memcpy(&addr_mouse.sun_path[1], mouse_flag_socket.c_str(), mouse_flag_socket.length());
 
-    socklen_t kb_len    = offsetof(struct sockaddr_un, sun_path) + backspace_socket.length() + 1;
     socklen_t mouse_len = offsetof(struct sockaddr_un, sun_path) + mouse_flag_socket.length() + 1;
-
-    if (bind(server_fd.get(), (struct sockaddr*)&addr_kb, kb_len) != 0) {
-        LotusLogger::instance().error("Failed to bind socket");
-        return 1;
-    }
 
     if (bind(mouse_server_fd.get(), (struct sockaddr*)&addr_mouse, mouse_len) != 0) {
         LotusLogger::instance().error("Failed to bind socket");
         return 1;
     }
 
-    listen(server_fd.get(), 5);
     listen(mouse_server_fd.get(), 5);
 
     LibinputContext li_ctx(&interface);
@@ -214,15 +142,10 @@ int main(int argc, char* argv[]) {
     }
 
     std::vector<struct pollfd> fds;
-    const int                  KB_CLIENT_INDEX = 3;
-    fds.push_back({server_fd.get(), POLLIN, 0});
     fds.push_back({li_ctx.get_fd(), POLLIN, 0});
     fds.push_back({mouse_server_fd.get(), POLLIN, 0});
-    fds.push_back({-1, POLLIN, 0}); // Keyboard socket client
 
     FdGuard          addon_fd;
-    FdGuard          kb_client_fd;
-    int              pending_backspaces = 0;
 
     struct sigaction sa{};
     sa.sa_handler = signal_handler;
@@ -232,8 +155,7 @@ int main(int argc, char* argv[]) {
     sigaction(SIGINT, &sa, nullptr);
 
     while (g_running.load(std::memory_order_acquire)) {
-        int poll_timeout = (pending_backspaces > 0) ? 1 : -1;
-        int ret          = poll(fds.data(), fds.size(), poll_timeout);
+        int ret = poll(fds.data(), fds.size(), -1);
 
         if (ret < 0) {
             if (errno == EINTR) {
@@ -242,60 +164,10 @@ int main(int argc, char* argv[]) {
             break;
         }
 
-        if (ret == 0) {
-            if (pending_backspaces > 0) {
-                uinput.send_backspace();
-                --pending_backspaces;
-            }
-        }
-
         libinput_dispatch(li_ctx.get_li());
 
-        // handle socket (backspace)
-        if ((fds[0].revents & POLLIN) != 0) {
-            int client_fd = accept4(server_fd.get(), nullptr, nullptr, SOCK_NONBLOCK);
-            if (client_fd >= 0) {
-                struct ucred cred{};
-                socklen_t    len                = sizeof(struct ucred);
-                char         exe_path[PATH_MAX] = {0};
-
-                if (getsockopt(client_fd, SOL_SOCKET, SO_PEERCRED, &cred, &len) == 0) {
-                    char path[64];
-                    snprintf(path, sizeof(path), "/proc/%d/exe", cred.pid);
-
-                    ssize_t ret = readlink(path, exe_path, sizeof(exe_path) - 1);
-                    if (ret != -1) {
-                        exe_path[ret] = '\0'; // NOLINT
-                    }
-                }
-
-                if (strcmp(exe_path, "/usr/bin/fcitx5") == 0) {
-                    LotusLogger::instance().info("Fcitx5 connected to keyboard socket (PID: " + std::to_string(cred.pid) + ")");
-                    kb_client_fd.reset(client_fd);
-                    fds[KB_CLIENT_INDEX].fd = kb_client_fd.get();
-                } else {
-                    LotusLogger::instance().warn("Unauthorized connection attempt from: " + std::string(exe_path));
-                    close(client_fd);
-                }
-            }
-        }
-
-        // handle connect from addon
-        if (fds[KB_CLIENT_INDEX].fd >= 0 && (fds[KB_CLIENT_INDEX].revents & (POLLIN | POLLHUP | POLLERR)) != 0) {
-            int     count = 0;
-            ssize_t n     = recv(fds[KB_CLIENT_INDEX].fd, &count, sizeof(count), 0);
-            if (n <= 0) {
-                LotusLogger::instance().warn("Keyboard client disconnected or connection error");
-                kb_client_fd.reset(-1);
-                fds[KB_CLIENT_INDEX].fd = -1;
-            } else {
-                pending_backspaces += count - 1;
-                uinput.send_backspace();
-            }
-        }
-
         // connect to mouse socket
-        if ((fds[2].revents & POLLIN) != 0) {
+        if ((fds[1].revents & POLLIN) != 0) {
             int new_fd = accept4(mouse_server_fd.get(), nullptr, nullptr, SOCK_NONBLOCK);
             if (new_fd >= 0) {
                 LotusLogger::instance().info("New mouse flag client connected");
@@ -304,7 +176,7 @@ int main(int argc, char* argv[]) {
         }
 
         // handle mouse (libinput)
-        if ((fds[1].revents & POLLIN) != 0) {
+        if ((fds[0].revents & POLLIN) != 0) {
             struct libinput_event* event = nullptr;
 
             while ((event = libinput_get_event(li_ctx.get_li())) != nullptr) {

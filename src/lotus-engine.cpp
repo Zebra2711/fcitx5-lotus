@@ -31,6 +31,7 @@
 
 #include <fcntl.h>
 #include <sstream>
+#include "debug.h"
 
 namespace fcitx {
     constexpr const char* CharsetActionPrefix = "lotus-charset-";
@@ -344,6 +345,9 @@ namespace fcitx {
 
         const LotusMode targetMode = getAppRule(appName);
         LOTUS_INFO("Target mode: " + modeEnumToString(targetMode));
+
+        // if ((now_ms() - state->lastDeactivateTime_) < 3)
+        //     reloadConfig(); // need better than place this here
 
         updateCharsetAction(event.inputContext());
 
