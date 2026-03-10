@@ -69,7 +69,6 @@ namespace fcitx::lotus {
         connect(btnAdd_, &QPushButton::clicked, this, &KeymapEditor::onAddClicked);
         connect(btnRemove_, &QPushButton::clicked, this, &KeymapEditor::onRemoveClicked);
         connect(btnLoadPreset_, &QPushButton::clicked, this, &KeymapEditor::onLoadPresetClicked);
-        // load();
     }
 
     QString KeymapEditor::title() {

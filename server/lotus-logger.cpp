@@ -84,7 +84,7 @@ void LotusLogger::rotate() {
     }
     file_.close();
 
-    for (size_t i = max_files_ - 1; i >= 0; --i) {
+    for (size_t i = max_files_; i-- > 0;) {
         std::string old_file = (i == 0) ? log_file_ : log_file_ + "." + std::to_string(i);
         std::string new_file = log_file_ + "." + std::to_string(i + 1);
 
