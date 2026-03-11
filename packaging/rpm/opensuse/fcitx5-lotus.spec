@@ -56,6 +56,7 @@ Vietnamese input method for fcitx5
 %dir %{_libdir}/fcitx5
 %{_libdir}/fcitx5/liblotus.so
 %{_libdir}/fcitx5/qt6/libfcitx5-lotus-keymap-editor.so
+%{_libdir}/fcitx5/qt6/libfcitx5-lotus-macro-editor.so
 
 %{_prefix}/lib/modules-load.d/fcitx5-lotus.conf
 %{_unitdir}/fcitx5-lotus-server@.service
