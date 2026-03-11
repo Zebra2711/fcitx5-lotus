@@ -45,7 +45,6 @@ add_subdirectory(server)
 add_subdirectory(misc)
 
 if(ENABLE_QT)
-    message(STATUS "QT is enabled, adding keymap editor GUI")
     target_compile_definitions(lotus PRIVATE ENABLE_KEYMAP_EDITOR)
     target_compile_definitions(lotus PRIVATE ENABLE_MACRO_EDITOR)
     set(QT_MAJOR_VERSION 6)
