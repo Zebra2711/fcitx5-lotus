@@ -3,7 +3,7 @@
 <a id="readme-top"></a>
 
 <div align="center">
-  <a href="https://github.com/LotusInputMethod/fcitx5-lotus">
+  <a href="https://lotusinputmethod.github.io/">
     <img src="data/fcitx-lotus-README.svg" alt="Logo" width="80" height="80">
   </a>
 
@@ -12,12 +12,17 @@
 <p align="center">
     <b>Bộ gõ tiếng Việt đơn giản, hiệu năng cao cho Linux</b>
     <br />
+    <a href="https://lotusinputmethod.github.io/"><strong>Khám phá trang chủ »</strong></a>
+    <br />
     <br />
     <a href="https://github.com/LotusInputMethod/fcitx5-lotus/releases">
       <img src="https://img.shields.io/github/v/release/LotusInputMethod/fcitx5-lotus?style=flat&color=success" alt="Release">
     </a>
     <a href="https://github.com/LotusInputMethod/fcitx5-lotus/blob/main/LICENSE">
       <img src="https://img.shields.io/github/license/LotusInputMethod/fcitx5-lotus?style=flat&color=blue" alt="License">
+    </a>
+    <a href="https://lotusinputmethod.github.io/">
+      <img src="https://img.shields.io/badge/website-live-brightgreen?style=flat&logo=firefox&logoColor=white" alt="Website">
     </a>
     <a href="https://github.com/LotusInputMethod/fcitx5-lotus/stargazers">
       <img src="https://img.shields.io/github/stars/LotusInputMethod/fcitx5-lotus?style=flat&color=yellow" alt="Stars">
