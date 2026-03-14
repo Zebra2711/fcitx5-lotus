@@ -1,9 +1,8 @@
-fcitx5-lotus (1.4.0-1) unstable; urgency=medium
+fcitx5-lotus (1.4.1-1) unstable; urgency=medium
 
-  * Enhance hotkey handling and app mode selection
+  * Add post script
+  * Use fcitx5 emoji addon
   * Fix some bugs
-  * Use common macro table for all input method
-  * Add Macro Editor Qt GUI
-  * Add Import/Export tsv function for keymap and macro
+  * Add emoji history
 
- -- Nguyen Hoang Ky <nhktmdzhg@gmail.com>  Wed, 11 Mar 2026 18:24:00 +0700
+ -- Nguyen Hoang Ky <nhktmdzhg@gmail.com>  Sat, 14 Mar 2026 08:27:00 +0700

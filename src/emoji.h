@@ -42,20 +42,46 @@ class EmojiLoader {
     std::vector<EmojiEntry> search(const std::string& prefix);
 
     /**
+     * @brief Records an emoji into history.
+     * @param entry The emoji entry to record.
+     */
+    void recordHistory(const EmojiEntry& entry);
+
+    /**
+     * @brief Gets the emoji history.
+     * @return List of recently used emojis.
+     */
+    const std::vector<EmojiEntry>& history() const {
+        return historyList;
+    }
+
+    /**
      * @brief Gets total emoji count.
      * @return Number of emojis loaded.
      */
     size_t size() const;
 
   private:
+    std::vector<EmojiEntry> historyList;   ///< Recently used emojis
     std::vector<EmojiEntry> emojiList;     ///< Internal emoji storage
     fcitx::AddonInstance*   emojiAddon_{}; ///< Fcitx5 emoji addon
+    std::string             historyPath_;
 
     /**
      * @brief Load emoji data from Fcitx5 emoji addon.
      * @param language Language code for emoji data.
      */
     void loadFromFcitx5(const std::string& language = "en");
+
+    /**
+     * @brief Loads emoji history from disk.
+     */
+    void loadHistory();
+
+    /**
+     * @brief Saves emoji history to disk.
+     */
+    void saveHistory();
 };
 
 #endif // EMOJI_H

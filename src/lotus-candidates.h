@@ -15,6 +15,7 @@
 
 #include <fcitx/candidatelist.h>
 #include <functional>
+#include "emoji-entry.h"
 
 namespace fcitx {
 
@@ -31,9 +32,9 @@ namespace fcitx {
          * @brief Constructs an emoji candidate.
          * @param text Display text for the candidate.
          * @param state Pointer to LotusState.
-         * @param emojiOutput The emoji character to output.
+         * @param entry The emoji entry.
          */
-        EmojiCandidateWord(Text text, LotusState* state, const std::string& emojiOutput);
+        EmojiCandidateWord(Text text, LotusState* state, EmojiEntry entry);
 
         /**
          * @brief Handles candidate selection.
@@ -43,7 +44,7 @@ namespace fcitx {
 
       private:
         LotusState* state_;
-        std::string emojiOutput_;
+        EmojiEntry  entry_;
     };
 
     /**

@@ -306,9 +306,13 @@ namespace fcitx {
         state->clearAllBuffers();
         is_deleting_.store(false);
         needEngineReset.store(false);
-        ic->inputPanel().reset();
-        ic->updateUserInterface(UserInterfaceComponent::InputPanel);
-        ic->updatePreedit();
+        if (targetMode == LotusMode::Emoji) {
+            state->updateEmojiPreedit();
+        } else {
+            ic->inputPanel().reset();
+            ic->updateUserInterface(UserInterfaceComponent::InputPanel);
+            ic->updatePreedit();
+        }
         for (const auto& action : toggleActions_) {
             statusArea.addAction(StatusGroup::InputMethod, action);
         }
@@ -470,6 +474,9 @@ namespace fcitx {
                 state->reset();
                 if (selectedMode != LotusMode::NoMode) {
                     setMode(selectedMode, ic);
+                    if (selectedMode == LotusMode::Emoji) {
+                        state->updateEmojiPreedit();
+                    }
                 }
             }
             return;
@@ -625,6 +632,10 @@ namespace fcitx {
 
                 cleanup(ic);
                 setMode(mode, ic);
+                if (mode == LotusMode::Emoji) {
+                    auto* state = ic->propertyFor(&factory_);
+                    state->updateEmojiPreedit();
+                }
             };
         };
 

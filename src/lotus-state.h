@@ -152,12 +152,6 @@ namespace fcitx {
         void handleEmojiMode(KeyEvent& keyEvent);
 
         /**
-         * @brief Selects an emoji candidate by index.
-         * @param index Candidate index.
-         */
-        void selectEmojiCandidate(int index);
-
-        /**
          * @brief Updates preedit display for emoji mode.
          */
         void updateEmojiPreedit();

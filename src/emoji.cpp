@@ -6,16 +6,22 @@
  */
 
 #include "emoji.h"
-
 #include <algorithm>
-
 #include <emoji_public.h>
+#include <fcitx-utils/standardpath.h>
+#include <fstream>
 
 EmojiLoader::EmojiLoader(fcitx::AddonManager* addonManager) {
     if (addonManager != nullptr) {
         emojiAddon_ = addonManager->addon("emoji", true);
     }
+#if LOTUS_USE_MODERN_FCITX_API
+    historyPath_ = (fcitx::StandardPaths::global().userDirectory(fcitx::StandardPathsType::Config) / "fcitx5" / "conf" / "lotus-emoji-history.conf").string();
+#else
+    historyPath_ = fcitx::StandardPath::global().userDirectory(fcitx::StandardPath::Type::Config) + "/fcitx5/conf/lotus-emoji-history.conf";
+#endif
     loadFromFcitx5("en");
+    loadHistory();
 }
 
 void EmojiLoader::loadFromFcitx5(const std::string& language) {
@@ -33,6 +39,54 @@ void EmojiLoader::loadFromFcitx5(const std::string& language) {
         }
         return true;
     });
+}
+
+void EmojiLoader::recordHistory(const EmojiEntry& entry) {
+    // Remove if already exists to move to top
+    historyList.erase(std::remove_if(historyList.begin(), historyList.end(), [&](const auto& e) { return e.output == entry.output; }), historyList.end());
+
+    historyList.insert(historyList.begin(), entry);
+
+    // Keep only last 9
+    if (historyList.size() > 9) {
+        historyList.resize(9);
+    }
+
+    saveHistory();
+}
+
+void EmojiLoader::loadHistory() {
+    historyList.clear();
+    std::ifstream file(historyPath_);
+    if (!file.is_open()) {
+        return;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty())
+            continue;
+        auto pos = line.find('=');
+        if (pos != std::string::npos) {
+            EmojiEntry entry;
+            entry.trigger = line.substr(0, pos);
+            entry.output  = line.substr(pos + 1);
+            historyList.push_back(entry);
+        }
+    }
+    file.close();
+}
+
+void EmojiLoader::saveHistory() {
+    std::ofstream file(historyPath_, std::ios::trunc);
+    if (!file.is_open()) {
+        return;
+    }
+
+    for (const auto& entry : historyList) {
+        file << entry.trigger << "=" << entry.output << "\n";
+    }
+    file.close();
 }
 
 std::vector<EmojiEntry> EmojiLoader::search(const std::string& prefix) {

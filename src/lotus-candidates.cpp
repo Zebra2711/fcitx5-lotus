@@ -6,26 +6,28 @@
  */
 #include "lotus-candidates.h"
 #include "lotus-state.h"
+#include "lotus-engine.h"
 
 #include <fcitx/inputpanel.h>
 
 namespace fcitx {
 
     // EmojiCandidateWord implementation
-    EmojiCandidateWord::EmojiCandidateWord(Text text, LotusState* state, const std::string& emojiOutput) :
-        CandidateWord(std::move(text)), state_(state), emojiOutput_(emojiOutput) {}
+    EmojiCandidateWord::EmojiCandidateWord(Text text, LotusState* state, EmojiEntry entry) : CandidateWord(std::move(text)), state_(state), entry_(std::move(entry)) {}
 
     void EmojiCandidateWord::select(InputContext* inputContext) const {
         FCITX_UNUSED(inputContext);
-        state_->ic_->commitString(emojiOutput_);
-        LOTUS_INFO("Emoji committed: " + emojiOutput_);
+        state_->ic_->commitString(entry_.output);
+        LOTUS_INFO("Emoji committed: " + entry_.output);
+
+        state_->engine_->emojiLoader().recordHistory(entry_);
 
         state_->emojiBuffer_.clear();
         state_->emojiCandidates_.clear();
 
         state_->ic_->inputPanel().reset();
         state_->ic_->updateUserInterface(UserInterfaceComponent::InputPanel);
-        state_->ic_->updatePreedit();
+        state_->updateEmojiPreedit();
     }
 
     // AppModeCandidateWord implementation

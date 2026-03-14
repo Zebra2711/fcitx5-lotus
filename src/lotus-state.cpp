@@ -351,8 +351,7 @@ namespace fcitx {
                 } else if (currentSym == FcitxKey_Return && !emojiBuffer_.empty()) {
                     ic_->commitString(emojiBuffer_);
                     emojiBuffer_.clear();
-                    ic_->inputPanel().reset();
-                    ic_->updateUserInterface(UserInterfaceComponent::InputPanel);
+                    updateEmojiPreedit();
                     keyEvent.filterAndAccept();
                 } else {
                     keyEvent.forward();
@@ -383,28 +382,18 @@ namespace fcitx {
             }
         }
     }
-
-    void LotusState::selectEmojiCandidate(int index) {
-        if (index >= 0 && index < static_cast<int>(emojiCandidates_.size())) {
-            ic_->commitString(emojiCandidates_[index].output);
-            LOTUS_INFO("Emoji committed: " + emojiCandidates_[index].output);
-            emojiBuffer_.clear();
-            emojiCandidates_.clear();
-            ic_->inputPanel().reset();
-            ic_->updateUserInterface(UserInterfaceComponent::InputPanel);
-        }
-    }
-
     void LotusState::updateEmojiPreedit() {
         if (emojiBuffer_.empty()) {
-            emojiCandidates_.clear();
-            ic_->inputPanel().reset();
-            ic_->updatePreedit();
-            ic_->updateUserInterface(UserInterfaceComponent::InputPanel);
-            return;
+            emojiCandidates_ = engine_->emojiLoader().history();
+            if (emojiCandidates_.empty()) {
+                ic_->inputPanel().reset();
+                ic_->updatePreedit();
+                ic_->updateUserInterface(UserInterfaceComponent::InputPanel);
+                return;
+            }
+        } else {
+            emojiCandidates_ = engine_->emojiLoader().search(emojiBuffer_);
         }
-
-        emojiCandidates_ = engine_->emojiLoader().search(emojiBuffer_);
 
         if (!emojiBuffer_.empty()) {
             Text preeditText;
@@ -414,6 +403,9 @@ namespace fcitx {
                 ic_->inputPanel().setClientPreedit(preeditText);
             else
                 ic_->inputPanel().setPreedit(preeditText);
+        } else {
+            ic_->inputPanel().setClientPreedit(Text());
+            ic_->inputPanel().setPreedit(Text());
         }
 
         if (!emojiCandidates_.empty()) {
@@ -423,8 +415,13 @@ namespace fcitx {
 
             for (size_t i = 0; i < emojiCandidates_.size(); ++i) {
                 size_t localIndex = (i % 9) + 1;
-                Text   displayLabel(std::to_string(localIndex) + ": " + emojiCandidates_[i].trigger + " " + emojiCandidates_[i].output);
-                candidateList->append(std::make_unique<EmojiCandidateWord>(displayLabel, this, emojiCandidates_[i].output));
+                Text   displayLabel;
+                if (emojiBuffer_.empty()) {
+                    displayLabel.append(std::to_string(localIndex) + ": " + emojiCandidates_[i].output, TextFormatFlag::NoFlag);
+                } else {
+                    displayLabel.append(std::to_string(localIndex) + ": " + emojiCandidates_[i].trigger + " " + emojiCandidates_[i].output, TextFormatFlag::NoFlag);
+                }
+                candidateList->append(std::make_unique<EmojiCandidateWord>(displayLabel, this, emojiCandidates_[i]));
             }
             candidateList->setGlobalCursorIndex(0);
 
