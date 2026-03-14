@@ -18,7 +18,8 @@
 #include <sys/stat.h>
 
 LotusLogger::LotusLogger(std::string log_file, size_t max_size, LogLevel level, size_t max_files) :
-    log_file_(std::move(log_file)), max_size_(max_size), max_files_(max_files), level_(level) {
+    log_file_(std::move(log_file)), max_size_(max_size), max_files_(max_files) {
+    level_.store(level);
 
     std::filesystem::path path(log_file_);
     if (path.has_parent_path()) {
@@ -45,12 +46,11 @@ LotusLogger::~LotusLogger() {
 }
 
 void LotusLogger::setLevel(LogLevel level) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    level_ = level;
+    level_.store(level);
 }
 
 bool LotusLogger::isEnabled(LogLevel level) const {
-    return level >= level_;
+    return level >= level_.load();
 }
 
 void LotusLogger::log(LogLevel level, const std::string& message) {

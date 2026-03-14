@@ -125,7 +125,7 @@ class LotusLogger {
     size_t             max_size_;
     size_t             max_files_;
     size_t             current_size_;
-    LogLevel           level_;
+    std::atomic<LogLevel> level_;
     std::ofstream      file_;
     std::mutex         mutex_;
 };
