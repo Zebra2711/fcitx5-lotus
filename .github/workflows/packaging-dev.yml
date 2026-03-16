@@ -34,7 +34,7 @@ jobs:
           - distro: ubuntu:24.04
             codename: noble
             parallel: 2
-            enable_qt: 'ON'
+            enable_qt: 'OFF'
           - distro: ubuntu:25.04
             codename: plucky
             parallel: 4
