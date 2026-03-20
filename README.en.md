@@ -309,6 +309,17 @@ end
 
 </details>
 
+If you are using **OpenRC** instead of **systemd**, run the following commands:
+```sh
+sudo rc-update add fcitx5-lotus
+sudo ln -s /etc/init.d/fcitx5-lotus /etc/init.d/fcitx5-lotus.$(whoami)
+sudo rc-service fcitx5-lotus.$(whoami) restart
+```
+To check the service status:
+```sh
+rc-service fcitx5-lotus.$(whoami) status
+```
+
 <p><b>Check status (if you see <span style="color: green;">active (running)</span>, it's OK):</b></p>
 
 ```bash
@@ -449,7 +460,7 @@ After logging out and logging in again:
   <summary><b>Additional configuration for Wayland (KDE, Hyprland Chromium-based, Electron)</b></summary>
 
 - **KDE Plasma:** _System Settings_ → _Keyboard_ → _Virtual Keyboard_ → Select **Fcitx 5**.
-- **Hyprland:** Add the following line to `~/.config/hypr/hyprland.conf`:
+- **Hyprland:** If you are using `ecosystem:enforce_permissions=1`, add the following line to `~/.config/hypr/hyprland.conf`:
 
 ```ini
 permission = fcitx5-lotus-server, keyboard, allow

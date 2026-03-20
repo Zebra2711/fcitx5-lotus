@@ -59,6 +59,7 @@ Vietnamese input method for fcitx5
 
 %{_prefix}/lib/modules-load.d/fcitx5-lotus.conf
 %{_unitdir}/fcitx5-lotus-server@.service
+%{_sysconfdir}/init.d/fcitx5-lotus
 %{_prefix}/lib/sysusers.d/lotus.conf
 %{_prefix}/lib/udev/rules.d/99-lotus.rules
 
