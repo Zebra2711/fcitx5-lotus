@@ -315,19 +315,16 @@ Kiểm tra status (nếu thấy active (running) là OK):
 systemctl status fcitx5-lotus-server@$(whoami).service
 ```
 
-> [!IMPORTANT]
-> If you are using **OpenRC** instead of **systemd**, run the following commands:
->
-> ```sh
-> sudo rc-update add fcitx5-lotus
-> sudo ln -s /etc/init.d/fcitx5-lotus /etc/init.d/fcitx5-lotus.$(whoami)
-> sudo rc-service fcitx5-lotus.$(whoami) restart
-> ```
-> To check the service status:
->
-> ```sh
-> rc-service fcitx5-lotus.$(whoami) status
-> ```
+Nếu bạn đang dùng **OpenRC** thay vì **systemd**, hãy chạy các lệnh sau:
+```sh
+sudo rc-update add fcitx5-lotus
+sudo ln -s /etc/init.d/fcitx5-lotus /etc/init.d/fcitx5-lotus.$(whoami)
+sudo rc-service fcitx5-lotus.$(whoami) restart
+```
+Để kiểm tra trạng thái dịch vụ:
+```sh
+rc-service fcitx5-lotus.$(whoami) status
+```
 
 ### 2. Thiết lập biến môi trường
 
