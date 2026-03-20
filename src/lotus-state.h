@@ -101,7 +101,9 @@ namespace fcitx {
         std::vector<EmojiEntry> emojiCandidates_;
         bool                    waitAck_ = false;
         std::vector<KeyEntry>   buffered_keys_; ///< Keystrokes buffered during replacement
-        bool                    isPrevSpace_ = false;
+        bool                    isPrevSpace_       = false;
+        bool                    shouldCapitalize_  = false;
+        bool                    isPrevPunctuation_ = false;
 
         /**
          * @brief Connects to the uinput server.
@@ -137,8 +139,9 @@ namespace fcitx {
         /**
          * @brief Handles key events in preedit mode.
          * @param keyEvent The key event to process.
+         * @param currentSym Current key symbol.
          */
-        void handlePreeditMode(KeyEvent& keyEvent);
+        void handlePreeditMode(KeyEvent& keyEvent, KeySym currentSym);
 
         /**
          * @brief Updates emoji page status in candidate list.
@@ -192,7 +195,7 @@ namespace fcitx {
          * @param checkEmptyPreedit Whether to check for empty preedit.
          * @param sleepTime Delay in microseconds.
          */
-        void handleUinputMode(KeyEvent& keyEvent, KeySym currentSym, bool checkEmptyPreedit, int sleepTime);
+        void handleUinputMode(KeyEvent& keyEvent, KeySym currentSym, bool checkEmptyPreedit);
 
         /**
          * @brief Handles surrounding text mode.
@@ -204,8 +207,9 @@ namespace fcitx {
         /**
          * @brief Handles processing normal key events.
          * @param keyEvent The key event.
+         * @param currentSym Current key symbol.
         */
-        void processNormalKey(KeyEvent& keyEvent);
+        void processNormalKey(KeyEvent& keyEvent, KeySym currentSym);
 
         /**
          * @brief Replays keystrokes buffered during replacement.

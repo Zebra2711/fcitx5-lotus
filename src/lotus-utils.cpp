@@ -69,9 +69,9 @@ int compareAndSplitStrings(const std::string& A, const std::string& B, std::stri
         }
     }
 
-    commonPrefix = A.substr(0, i);
-    deletedPart  = A.substr(i);
-    addedPart    = B.substr(j);
+    commonPrefix.assign(A, 0, i);
+    deletedPart.assign(A, i);
+    addedPart.assign(B, j);
     return (deletedPart.empty() && addedPart.empty()) ? 1 : 2;
 }
 
