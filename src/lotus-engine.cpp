@@ -781,7 +781,7 @@ namespace fcitx {
         switch (realMode) {
             case LotusMode::Off: return _("Lotus - Off");
             case LotusMode::Emoji: return "😄";
-            default: return "🪷";
+            default: return "vi";
         }
     }
 
