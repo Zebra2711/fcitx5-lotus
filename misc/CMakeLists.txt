@@ -12,6 +12,6 @@ install(FILES user-lotus.conf
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/sysusers.d
     RENAME lotus.conf)
 
-install(FILES fcitx5-lotus.openrc
+install(PROGRAMS fcitx5-lotus.openrc
     DESTINATION /etc/init.d
     RENAME fcitx5-lotus)
