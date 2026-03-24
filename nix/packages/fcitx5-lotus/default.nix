@@ -17,14 +17,14 @@
 }:
 stdenv.mkDerivation rec {
   pname = "fcitx5-lotus";
-  version = "1.5.2";
+  version = "1.6.1";
 
   src = fetchFromGitHub {
     owner = "LotusInputMethod";
     repo = "fcitx5-lotus";
     rev = "v${version}";
     fetchSubmodules = true;
-    sha256 = "sha256-lCS1m4W3PtdgKLIdSofPPQ+BGgkXE+p6DXEg+QtTgyg=";
+    sha256 = "sha256-70K7Mha8s3xYb8KfFuo1gDc4pX5TNBDKmtrZ4G+mrMI=";
   };
 
   nativeBuildInputs = [
@@ -62,6 +62,7 @@ stdenv.mkDerivation rec {
     "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
     "-DCMAKE_INSTALL_LIBDIR=lib"
     "-DGO_FLAGS=-mod=vendor"
+    "-DINSTALL_OPENRC=OFF"
   ];
 
   # change checking exe_path logic to make it work on NixOS since executable files on NixOS are not located in /usr/bin
