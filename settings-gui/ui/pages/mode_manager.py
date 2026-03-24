@@ -235,9 +235,12 @@ class AddAppDialog(QDialog):
                             name = exe_base
                         else:
                             clean = name[1:]
-                            for s in ['-wrapped', '-wrappe', '-wrapp', '-wrap', '-wra', '-wr', '-w']:
-                                if clean.endswith(s):
-                                    clean = clean[:-len(s)]
+                            # On NixOS, wrapped application names from /proc/<pid>/comm can be truncated.
+                            # We check for partial suffixes of "-wrapped", from longest to shortest.
+                            base_suffix = "-wrapped"
+                            for i in range(len(base_suffix), 1, -1):
+                                if clean.endswith(base_suffix[:i]):
+                                    clean = clean[:-i]
                                     break
                             if clean:
                                 name = clean
