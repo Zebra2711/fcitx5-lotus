@@ -30,6 +30,7 @@ from ui.pages.dict_editor import DictEditorPage
 from ui.pages.keymap_editor import KeymapEditorPage
 from ui.pages.about import AboutPage
 from ui.pages.mode_manager import ModeManagerPage
+from ui.pages.backup import BackupPage
 import os
 
 
@@ -201,6 +202,11 @@ class LotusSettingsWindow(QMainWindow):
             DynamicSettingsPage(
                 self.dbus_handler, category=SettingsCategory.APPEARANCE
             ),
+        )
+        self._add_page(
+            _("Backup"),
+            "document-save-as",
+            BackupPage(self.dbus_handler),
         )
 
         # Bottom section

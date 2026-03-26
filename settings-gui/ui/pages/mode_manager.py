@@ -686,7 +686,7 @@ class ModeManagerPage(QWidget):
             or self.combo_global_mode.currentText() != "Uinput (Smooth)"
         )
 
-    def on_import(self):
+    def do_import(self):
         """Imports app rules from a TSV file."""
         path, _filter = QFileDialog.getOpenFileName(
             self,
@@ -754,7 +754,7 @@ class ModeManagerPage(QWidget):
             _(f"Imported {imported} rules, skipped {skipped} invalid lines."),
         )
 
-    def on_export(self):
+    def do_export(self):
         """Exports current app rules to a TSV file."""
         if not self.app_rules:
             QMessageBox.information(

@@ -342,7 +342,7 @@ class DictEditorPage(BaseEditorPage):
         self._on_item_changed()
         self._update_add_button_icon()
 
-    def on_import(self):
+    def do_import(self):
         path, _filter = QFileDialog.getOpenFileName(
             self,
             _("Import Custom Dictionary"),
@@ -393,7 +393,7 @@ class DictEditorPage(BaseEditorPage):
             _(f"Imported {imported} words."),
         )
 
-    def on_export(self):
+    def do_export(self):
         if not self.words:
             QMessageBox.information(
                 self, _("Export"), _("The custom dictionary is empty, nothing to export.")

@@ -329,10 +329,7 @@ class KeymapEditorPage(BaseEditorPage):
         self.btn_remove.setToolTip(_("Remove selected row"))
         self.btn_remove.clicked.connect(self.on_remove)
 
-        btn_import = QPushButton(QIcon.fromTheme("document-import"), _("Import"))
-        btn_export = QPushButton(QIcon.fromTheme("document-export"), _("Export"))
-        btn_import.clicked.connect(self.on_import)
-        btn_export.clicked.connect(self.on_export)
+        self.btn_remove.clicked.connect(self.on_remove)
 
         toolbar_layout.addWidget(self.btn_remove)
         toolbar_layout.addStretch()
@@ -486,7 +483,7 @@ class KeymapEditorPage(BaseEditorPage):
         if cell_combo:
             self.combo_action.setCurrentIndex(cell_combo.currentIndex())
 
-    def on_import(self):
+    def do_import(self):
         """Imports keymap from a TSV file."""
         path, _filter = QFileDialog.getOpenFileName(
             self,
@@ -555,7 +552,7 @@ class KeymapEditorPage(BaseEditorPage):
             _(f"Imported {imported} entries, skipped {skipped} invalid lines."),
         )
 
-    def on_export(self):
+    def do_export(self):
         """Exports the current table to a TSV file."""
         if self.table.rowCount() == 0:
             QMessageBox.information(

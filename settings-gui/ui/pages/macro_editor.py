@@ -128,14 +128,9 @@ class MacroEditorPage(BaseEditorPage):
         self.btn_down = QPushButton(QIcon.fromTheme("go-down"), "")
         self.btn_down.setToolTip(_("Move Down"))
 
-        self.btn_import = QPushButton(QIcon.fromTheme("document-import"), _("Import"))
-        self.btn_export = QPushButton(QIcon.fromTheme("document-export"), _("Export"))
-
         self.btn_remove.clicked.connect(self.on_remove)
         self.btn_up.clicked.connect(self.on_move_up)
         self.btn_down.clicked.connect(self.on_move_down)
-        self.btn_import.clicked.connect(self.on_import)
-        self.btn_export.clicked.connect(self.on_export)
 
         toolbar_layout.addWidget(self.btn_remove)
         toolbar_layout.addWidget(self.btn_up)
@@ -372,7 +367,7 @@ class MacroEditorPage(BaseEditorPage):
             self.input_val.setText(val_item.text())
         self.update_button_states()
 
-    def on_import(self):
+    def do_import(self):
         path, _filter = QFileDialog.getOpenFileName(
             self,
             _("Import Macros"),
@@ -427,7 +422,7 @@ class MacroEditorPage(BaseEditorPage):
             _(f"Imported {imported} entries, skipped {skipped} invalid lines."),
         )
 
-    def on_export(self):
+    def do_export(self):
         if self.table.rowCount() == 0:
             QMessageBox.information(
                 self, _("Export"), _("The macro list is empty, nothing to export.")
