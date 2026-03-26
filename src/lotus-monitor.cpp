@@ -20,9 +20,9 @@
 #include <limits.h>
 
 std::thread monitor_thread = std::thread();
-std::thread mouse_thread = std::thread();
+std::thread mouse_thread   = std::thread();
 
-void deletingTimeMonitor() {
+void        deletingTimeMonitor() {
     LOTUS_INFO("Deleting monitor thread started.");
     while (!stop_flag_monitor.load()) {
         int64_t deleting_since = 0;
