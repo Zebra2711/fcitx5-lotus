@@ -1,0 +1,34 @@
+# Append to test/CMakeLists.txt
+
+# ---- Pure unit tests (no Instance, no addon loading) ----
+
+add_executable(testutils testutils.cpp)
+target_link_libraries(testutils Fcitx5::Utils lotus_utils_obj)
+target_compile_definitions(testutils PRIVATE
+    FCITX5_BINARY_DIR="${CMAKE_BINARY_DIR}"
+    FCITX5_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+add_test(NAME testutils COMMAND testutils)
+
+add_executable(cgoobject cgoobject.cpp)
+target_link_libraries(cgoobject Fcitx5::Utils)   # bamboo-core NOT linked; stub DeleteObject is in the .cpp
+target_include_directories(cgoobject PRIVATE ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME cgoobject COMMAND cgoobject)
+
+add_executable(ackapps ackapps.cpp)
+target_link_libraries(ackapps Fcitx5::Utils)
+target_include_directories(ackapps PRIVATE ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME ackapps COMMAND ackapps)
+
+# ---- Integration tests (require Instance + lotus addon) ----
+
+foreach(test_name doublespace modeswitch emoji replaybuffer)
+    add_executable(${test_name} ${test_name}.cpp)
+    target_link_libraries(${test_name}
+        Fcitx5::Core
+        Fcitx5::Utils
+        Fcitx5::Module::TestFrontend)
+    target_compile_definitions(${test_name} PRIVATE
+        FCITX5_BINARY_DIR="${CMAKE_BINARY_DIR}"
+        FCITX5_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+    add_test(NAME ${test_name} COMMAND ${test_name})
+endforeach()

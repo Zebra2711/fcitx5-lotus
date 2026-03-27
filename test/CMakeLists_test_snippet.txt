@@ -1,0 +1,16 @@
+# Add to your existing test/CMakeLists.txt (or create one)
+
+add_executable(testlotus testlotus.cpp)
+
+target_link_libraries(testlotus
+    Fcitx5::Core
+    Fcitx5::Utils
+    Fcitx5::Module::TestFrontend   # provides ITestFrontend
+)
+
+target_compile_definitions(testlotus PRIVATE
+    FCITX5_BINARY_DIR="${CMAKE_BINARY_DIR}"
+    FCITX5_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
+add_test(NAME testlotus COMMAND testlotus)
