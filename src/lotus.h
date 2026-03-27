@@ -49,8 +49,18 @@ namespace fcitx {
         CGoObject(const CGoObject&)            = delete;
         CGoObject& operator=(const CGoObject&) = delete;
 
-        CGoObject(CGoObject&& other)            = default;
-        CGoObject& operator=(CGoObject&& other) = default;
+        CGoObject(CGoObject&& other) noexcept : handle_(other.handle_) {
+            other.handle_ = std::nullopt;
+        }
+
+        CGoObject& operator=(CGoObject&& other) noexcept {
+            if (this != &other) {
+                clear();
+                handle_       = other.handle_;
+                other.handle_ = std::nullopt;
+            }
+            return *this;
+        }
 
         /**
          * @brief Resets with a new handle, releasing the old one.

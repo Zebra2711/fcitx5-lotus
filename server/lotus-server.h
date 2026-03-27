@@ -95,10 +95,23 @@ class LibinputContext {
     // Disable copy, allow move
     LibinputContext(const LibinputContext&)            = delete;
     LibinputContext& operator=(const LibinputContext&) = delete;
-    LibinputContext(LibinputContext&&)                 = default;
-    LibinputContext& operator=(LibinputContext&&)      = default;
+    LibinputContext(LibinputContext&& other) noexcept : udev_(other.udev_), li_(other.li_) {
+        other.udev_ = nullptr;
+        other.li_   = nullptr;
+    }
 
-    bool             is_valid() const {
+    LibinputContext& operator=(LibinputContext&& other) noexcept {
+        if (this != &other) {
+            this->~LibinputContext();
+            udev_       = other.udev_;
+            li_         = other.li_;
+            other.udev_ = nullptr;
+            other.li_   = nullptr;
+        }
+        return *this;
+    }
+
+    bool is_valid() const {
         return li_ != nullptr;
     }
     struct libinput* get_li() const {

@@ -27,9 +27,9 @@ extern std::thread mouse_thread;
 void deletingTimeMonitor();
 
 /**
- * @brief Starts the monitoring thread (runs once).
+ * @brief Starts the monitoring thread.
  */
-void startMonitoringOnce();
+void startMonitoring();
 
 /**
  * @brief Thread function for mouse press detection and reset.

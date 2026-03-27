@@ -47,13 +47,14 @@ UinputDevice::~UinputDevice() {
 }
 
 bool UinputDevice::initialize() {
-    int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    int fd = open("/dev/uinput", O_WRONLY);
     if (fd < 0)
         return false;
     guard_.reset(fd);
 
-    ioctl(fd, UI_SET_EVBIT, EV_KEY);
-    ioctl(fd, UI_SET_KEYBIT, KEY_BACKSPACE);
+    if (ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0 || ioctl(fd, UI_SET_KEYBIT, KEY_BACKSPACE) < 0) {
+        return false;
+    }
 
     struct uinput_setup usetup{};
     usetup.id.bustype = BUS_USB;
@@ -61,8 +62,9 @@ bool UinputDevice::initialize() {
     usetup.id.product = 0x5678;
     strncpy(usetup.name, "Lotus-Uinput-Server", UINPUT_MAX_NAME_SIZE - 1);
 
-    ioctl(fd, UI_DEV_SETUP, &usetup);
-    ioctl(fd, UI_DEV_CREATE);
+    if (ioctl(fd, UI_DEV_SETUP, &usetup) < 0 || ioctl(fd, UI_DEV_CREATE) < 0) {
+        return false;
+    }
     sleep(1);
     return true;
 }
@@ -83,8 +85,12 @@ void UinputDevice::send_backspace() {
 LibinputContext::LibinputContext(const struct libinput_interface* interface) : udev_(udev_new()) {
     if (udev_ != nullptr) {
         li_ = libinput_udev_create_context(interface, nullptr, udev_);
-        if (li_ != nullptr)
-            libinput_udev_assign_seat(li_, "seat0");
+        if (li_ != nullptr) {
+            if (libinput_udev_assign_seat(li_, "seat0") != 0) {
+                libinput_unref(li_);
+                li_ = nullptr;
+            }
+        }
     }
 }
 
@@ -97,7 +103,6 @@ LibinputContext::~LibinputContext() {
 
 void signal_handler(int sig) {
     if (sig == SIGTERM || sig == SIGINT) {
-        LotusLogger::instance().info("Terminating server...");
         g_running.store(false);
     }
 }
@@ -171,8 +176,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    FdGuard            server_fd(socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0));
-    FdGuard            mouse_server_fd(socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0));
+    FdGuard            server_fd(socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0));
+    FdGuard            mouse_server_fd(socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0));
 
     struct sockaddr_un addr_kb{};
     struct sockaddr_un addr_mouse{};
@@ -328,5 +333,6 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+    LotusLogger::instance().info("Terminating server...");
     return 0;
 }

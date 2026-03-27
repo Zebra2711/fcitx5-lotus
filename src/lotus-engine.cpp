@@ -100,7 +100,7 @@ namespace fcitx {
     LotusEngine::LotusEngine(Instance* instance) : instance_(instance), factory_([this](InputContext& ic) { return new LotusState(this, &ic); }) { //NOLINT
         const char* desktop = std::getenv("XDG_CURRENT_DESKTOP");
         isGnome_            = (desktop != nullptr) && std::string(desktop).find("GNOME") != std::string::npos;
-        startMonitoringOnce();
+        startMonitoring();
         Init();
         {
             auto imNames = convertToStringList(GetInputMethodNames());
@@ -223,6 +223,8 @@ namespace fcitx {
         if (monitor_thread.joinable()) {
             monitor_thread.join();
         }
+        close(uinput_client_fd_);
+        uinput_client_fd_ = -1;
         LOTUS_INFO("Engine destroyed.");
     }
 
@@ -564,7 +566,7 @@ namespace fcitx {
         size_t       textLen = fcitx_utf8_strlen(text.c_str());
         unsigned int cursor  = s.cursor();
         if (textLen == static_cast<size_t>(cursor))
-            realtextLen = static_cast<unsigned int>(textLen);
+            realtextLen.store(static_cast<unsigned int>(textLen), std::memory_order_release);
     }
 
     void LotusEngine::reset(const InputMethodEntry& entry, InputContextEvent& event) {

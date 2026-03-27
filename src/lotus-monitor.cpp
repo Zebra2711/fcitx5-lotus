@@ -70,15 +70,17 @@ void        deletingTimeMonitor() {
     LOTUS_INFO("Deleting monitor thread stopped.");
 }
 
-void startMonitoringOnce() {
+void startMonitoring() {
     if (monitor_running.load())
         return;
-    std::call_once(monitor_init_flag, []() {
+    if (!monitor_running.exchange(true, std::memory_order_acq_rel)) {
         LOTUS_INFO("Initializing monitor threads...");
-        stop_flag_monitor.store(false);
+        if (monitor_thread.joinable()) {
+            monitor_thread.join();
+        }
+        stop_flag_monitor.store(false, std::memory_order_release);
         monitor_thread = std::thread(deletingTimeMonitor);
-        monitor_running.store(true, std::memory_order_release);
-    });
+    }
 }
 
 void mousePressResetThread() {
@@ -86,7 +88,7 @@ void mousePressResetThread() {
     LOTUS_INFO("Mouse press reset thread started.");
 
     while (!stop_flag_monitor.load(std::memory_order_acquire)) {
-        int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+        int sock = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0);
         if (sock < 0) {
             LOTUS_ERROR("Failed to create socket: " + std::string(strerror(errno)));
             sleep(1);

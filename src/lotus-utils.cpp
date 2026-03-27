@@ -12,24 +12,22 @@
 #include <fcitx-utils/utf8.h>
 
 // Global variables
-fcitx::LotusMode        realMode = fcitx::LotusMode::Smooth;
-std::atomic<bool>       needEngineReset{false};
-std::string             BASE_SOCKET_PATH;
-std::atomic<bool>       g_mouse_clicked{false};
-std::atomic<bool>       is_deleting_{false};
-std::once_flag          monitor_init_flag;
-std::atomic<bool>       stop_flag_monitor{false};
-std::atomic<bool>       monitor_running{false};
-int                     uinput_client_fd_ = -1;
-unsigned int            realtextLen       = 0;
-std::atomic<int>        mouse_socket_fd{-1};
+std::atomic<fcitx::LotusMode> realMode{fcitx::LotusMode::Smooth};
+std::atomic<bool>             needEngineReset{false};
+std::atomic<bool>             g_mouse_clicked{false};
+std::atomic<bool>             is_deleting_{false};
+std::atomic<bool>             stop_flag_monitor{false};
+std::atomic<bool>             monitor_running{false};
+std::atomic<int>              uinput_client_fd_{-1};
+std::atomic<unsigned int>     realtextLen{0};
+std::atomic<int>              mouse_socket_fd{-1};
 
-std::atomic<int64_t>    replacement_start_ms_{0};
-std::atomic<int>        replacement_thread_id_{0};
-std::atomic<bool>       needFallbackCommit{false};
+std::atomic<int64_t>          replacement_start_ms_{0};
+std::atomic<int>              replacement_thread_id_{0};
+std::atomic<bool>             needFallbackCommit{false};
 
-std::mutex              monitor_mutex;
-std::condition_variable monitor_cv;
+std::mutex                    monitor_mutex;
+std::condition_variable       monitor_cv;
 
 FCITX_DEFINE_LOG_CATEGORY(lotus, "lotus", fcitx::LogLevel::NoLog);
 
@@ -61,6 +59,12 @@ int compareAndSplitStrings(const std::string& A, const std::string& B, std::stri
     while (i < A.size() && j < B.size()) {
         unsigned int lenA = fcitx_utf8_char_len(&A[i]);
         unsigned int lenB = fcitx_utf8_char_len(&B[j]);
+        if (lenA == 0 || lenB == 0) {
+            break;
+        }
+        if (i + lenA > A.size() || j + lenB > B.size()) {
+            break;
+        }
         if (lenA == lenB && std::strncmp(&A[i], &B[j], lenA) == 0) {
             i += lenA;
             j += lenB;

@@ -20,7 +20,6 @@
 #define _LOTUS_LOGGER_H_
 
 #include <atomic>
-#include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <string>
@@ -36,10 +35,6 @@ enum class LogLevel : std::uint8_t {
 
 class LotusLogger {
   public:
-    // Const
-    static constexpr size_t DEFAULT_MAX_SIZE  = static_cast<long>(10 * 1024) * 1024; // 10MB
-    static constexpr size_t DEFAULT_MAX_FILES = 5;
-
     /**
      * @brief Instance constructor
      */
@@ -100,17 +95,7 @@ class LotusLogger {
      * @param max_files Maximum number of backup files to keep
      * @param level Minimum log level to output
      */
-    LotusLogger(std::string log_file = "/tmp/fcitx5-lotus-server.log", size_t max_size = DEFAULT_MAX_SIZE, LogLevel level = LogLevel::INFO, size_t max_files = DEFAULT_MAX_FILES);
-
-    /**
-     * @brief Rotate log files if current file exceeds max size
-     */
-    void rotateIfNeeded();
-
-    /**
-     * @brief Perform actual file rotation
-     */
-    void rotate();
+    LotusLogger(std::string log_file = "/tmp/fcitx5-lotus-server.log", LogLevel level = LogLevel::INFO);
 
     /**
      * @brief Get current timestamp string
@@ -123,9 +108,6 @@ class LotusLogger {
     static std::string    levelToString(LogLevel level);
 
     std::string           log_file_;
-    size_t                max_size_;
-    size_t                max_files_;
-    size_t                current_size_;
     std::atomic<LogLevel> level_;
     std::ofstream         file_;
     std::mutex            mutex_;

@@ -31,8 +31,6 @@ type FcitxBambooEngine struct {
 	w2u                     bool
 }
 
-
-
 const (
 	FcitxShiftMask   = 1 << 0
 	FcitxLockMask    = 1 << 1
@@ -51,9 +49,9 @@ const (
 	FcitxMetaMask  = 1 << 28
 )
 const (
-	FcitxBackSpace       = 0xff08
-	FcitxSpace           = 0x020
-	FcitxTab             = 0xff09
+	FcitxBackSpace = 0xff08
+	FcitxSpace     = 0x020
+	FcitxTab       = 0xff09
 )
 
 const (
@@ -201,6 +199,14 @@ func (e *FcitxBambooEngine) mustFallbackToEnglish() bool {
 	return !e.preeditor.IsValid(true)
 }
 
+func getLastRune(s string) rune {
+	if len(s) == 0 {
+		return 0
+	}
+	r, _ := utf8.DecodeLastRuneInString(s)
+	return r
+}
+
 func (e *FcitxBambooEngine) getCommitText(keyVal, state uint32) (string, bool) {
 	var keyRune = rune(keyVal)
 	oldText := e.getPreeditString()
@@ -222,7 +228,7 @@ func (e *FcitxBambooEngine) getCommitText(keyVal, state uint32) (string, bool) {
 			} else {
 				newText = e.getProcessedString(bamboo.VietnameseMode)
 			}
-			if fullSeq := e.preeditor.GetProcessedString(bamboo.VietnameseMode); len(fullSeq) > 0 && rune(fullSeq[len(fullSeq)-1]) == keyRune {
+			if fullSeq := e.preeditor.GetProcessedString(bamboo.VietnameseMode); len(fullSeq) > 0 && getLastRune(fullSeq) == keyRune {
 				// [[ => [
 				var ret = e.getPreeditString()
 				var lastRune = rune(ret[len(ret)-1])

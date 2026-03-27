@@ -78,9 +78,8 @@ namespace fcitx {
     bool LotusState::connect_uinput_server() {
         if (uinput_client_fd_ >= 0)
             return true;
-        BASE_SOCKET_PATH               = buildSocketPath("kb_socket");
-        const std::string current_path = BASE_SOCKET_PATH;
-        int               current_fd   = socket(AF_UNIX, SOCK_STREAM, 0);
+        const std::string current_path = buildSocketPath("kb_socket");
+        int               current_fd   = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0);
         if (current_fd < 0) {
             LOTUS_ERROR("Failed to create socket: " + std::string(strerror(errno)));
             return false;
@@ -104,7 +103,7 @@ namespace fcitx {
     }
 
     int LotusState::setup_uinput() {
-        return connect_uinput_server() ? uinput_client_fd_ : -1;
+        return connect_uinput_server() ? uinput_client_fd_.load(std::memory_order_acquire) : -1;
     }
 
     void LotusState::send_backspace_uinput(int count) const {
@@ -160,8 +159,8 @@ namespace fcitx {
         const size_t pb            = text.find(oldPreBuffer_);
         size_t       rangeStart    = buffLen >= static_cast<size_t>(cursor) ? 0 : static_cast<size_t>(cursor) - buffLen;
         size_t       currSuffixLen = textLen > static_cast<size_t>(cursor) ? textLen - static_cast<size_t>(cursor) : 0;
-        if (prevSurrSuffixLen_ != currSuffixLen && cursor < realtextLen)
-            realtextLen = cursor;
+        if (prevSurrSuffixLen_ != currSuffixLen && cursor < realtextLen.load(std::memory_order_acquire))
+            realtextLen.store(cursor, std::memory_order_release);
         prevSurrSuffixLen_    = currSuffixLen;
         const bool sameprefix = pb != std::string::npos && pb >= rangeStart && pb <= static_cast<size_t>(cursor);
 
@@ -183,17 +182,17 @@ namespace fcitx {
         }
 
         if (textLen == static_cast<size_t>(cursor)) {
-            realtextLen = textLen;
+            realtextLen.store(textLen, std::memory_order_release);
             return false;
         }
 
         // Heuristic: rapid text growth in a single-line context.
         // Applied only when no newline is present after the cursor to distinguish from AI text in editors.
-        if (textLen > static_cast<size_t>(cursor) && cursor == realtextLen && text.find('\n', cursor) == std::string::npos && sameprefix)
+        if (textLen > static_cast<size_t>(cursor) && cursor == realtextLen.load(std::memory_order_acquire) && text.find('\n', cursor) == std::string::npos && sameprefix)
             return true;
 
-        realtextLen = std::max(realtextLen, cursor);
-
+        for (auto v = realtextLen.load(std::memory_order_acquire); v < cursor && !realtextLen.compare_exchange_weak(v, cursor, std::memory_order_acq_rel);)
+            ;
         return false;
     }
 
@@ -463,14 +462,14 @@ namespace fcitx {
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
             // Validate surr cursor pos should match realtextLen after all BS applied
             const auto& surr = ic_->surroundingText();
-            if (surr.isValid() && surr.cursor() == realtextLen) {
+            if (surr.isValid() && surr.cursor() == realtextLen.load(std::memory_order_acquire)) {
                 LOTUS_INFO("Skip retry");
             } else {
                 // Retry x3 (2 ms each), khi can (chromium,electron,...)
                 for (int retry = 0; retry < 3; ++retry) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(2));
                     const auto& surr2 = ic_->surroundingText();
-                    if (surr2.isValid() && surr2.cursor() == realtextLen) {
+                    if (surr2.isValid() && surr2.cursor() == realtextLen.load(std::memory_order_acquire)) {
                         break;
                     }
                 }
@@ -650,7 +649,7 @@ namespace fcitx {
         }
 
         history_ += keyUtf8;
-        realtextLen += 1;
+        realtextLen.fetch_add(1, std::memory_order_acq_rel);
 
         replayBufferToEngine(history_);
 
@@ -971,8 +970,8 @@ namespace fcitx {
 
         if (is_deleting_.load(std::memory_order_acquire)) {
             if (isBackspace(currentSym)) {
-                if (realtextLen > 0)
-                    realtextLen -= 1;
+                if (realtextLen.load(std::memory_order_acquire) > 0)
+                    realtextLen.fetch_sub(1, std::memory_order_acq_rel);
                 if (handleUInputKeyPress(keyEvent, currentSym, (realMode == LotusMode::Smooth) ? 5 : 20)) {
                     return;
                 }
@@ -1033,7 +1032,7 @@ namespace fcitx {
         const auto& surrounding = ic_->surroundingText();
         const auto& text        = surrounding.text();
         size_t      textLen     = utf8::length(text);
-        realtextLen             = textLen;
+        realtextLen.store(textLen, std::memory_order_release);
         if (surrounding.isValid()) {
             prevSurrSuffixLen_ = textLen > static_cast<size_t>(surrounding.cursor()) ? textLen - static_cast<size_t>(surrounding.cursor()) : 0;
         }
@@ -1200,7 +1199,7 @@ namespace fcitx {
             }
 
             history_ += keyUtf8;
-            realtextLen += 1;
+            realtextLen.fetch_add(1, std::memory_order_acq_rel);
 
             replayBufferToEngine(history_);
 
