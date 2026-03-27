@@ -178,6 +178,13 @@ namespace fcitx {
         uintptr_t macroTable() const;
 
         /**
+         * @brief Get name of current program
+         * @param ic Current input context.
+         * @return Name of current program
+         */
+        std::string getProgramName(InputContext* ic);
+
+        /**
          * @brief Gets the emoji loader.
          * @return Reference to emoji loader instance.
          */
@@ -318,13 +325,6 @@ namespace fcitx {
          * @param ic Current input context.
          */
         static void setMode(LotusMode mode, InputContext* ic);
-
-        /**
-         * @brief Get name of current program
-         * @param ic Current input context.
-         * @return Name of current program
-         */
-        static std::string getProgramName(InputContext* ic);
     };
 
     /**

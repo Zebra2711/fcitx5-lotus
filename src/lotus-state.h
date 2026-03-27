@@ -170,7 +170,7 @@ namespace fcitx {
          * @param deletedPart Text to delete.
          * @param addedPart Text to insert.
          */
-        void performReplacement(const std::string& deletedPart, const std::string& addedPart);
+        bool performReplacement(const std::string& deletedPart, const std::string& addedPart);
 
         /**
          * @brief Handles the double space to period replacement.

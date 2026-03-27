@@ -478,24 +478,49 @@ namespace fcitx {
         return false;
     }
 
-    void LotusState::performReplacement(const std::string& deletedPart, const std::string& addedPart) {
+    bool LotusState::performReplacement(const std::string& deletedPart, const std::string& addedPart) {
         LOTUS_INFO("Perform replacement: " + deletedPart + " -> " + addedPart); //NOLINT
-        int my_id                = ++current_thread_id_;
-        current_backspace_count_ = 0;
-        pending_commit_string_   = addedPart;
-        const auto& surrounding  = ic_->surroundingText();
-        // Enable Autofill detection for all frontends (Wayland/IBus).
-        // This fixes the "toôi" duplication bug in Chromium-based search bars.
-        // The isAutofillCertain function has been optimized to differentiate
-        // between browser autofill and AI ghost text.
-        int autofillOffset   = isAutofillCertain(surrounding) ? 1 : 0;
-        expected_backspaces_ = static_cast<int>(utf8::length(deletedPart)) + 1 + autofillOffset;
-        replacement_thread_id_.store(my_id, std::memory_order_release);
-        replacement_start_ms_.store(now_ms(), std::memory_order_release);
-        is_deleting_.store(true, std::memory_order_release);
-        monitor_cv.notify_one();
-        send_backspace_uinput(expected_backspaces_);
-        LOTUS_INFO("Send " + std::to_string(expected_backspaces_) + " backspaces");
+        int my_id                  = ++current_thread_id_;
+        current_backspace_count_   = 0;
+        pending_commit_string_     = addedPart;
+        const auto& surrounding    = ic_->surroundingText();
+        int         autofillOffset = isAutofillCertain(surrounding) ? 1 : 0;
+        expected_backspaces_       = static_cast<int>(utf8::length(deletedPart)) + 1 + autofillOffset;
+        // Use deleteSurroundingText for apps that support it for smooth typing
+        if (engine_->getProgramName(ic_) == "soffice" && // Lmfao, only this work :>
+            surrounding.isValid() && ic_->capabilityFlags().test(CapabilityFlag::SurroundingText) &&
+            (surrounding.text()).back() != '\n' // firefox and discord insert '\n' into surrounding cause bug
+            && !(autofillOffset)                // TODO: Guard, remove this when bug of surrounding is fixes
+        ) {
+            auto      cur     = static_cast<size_t>(surrounding.cursor());
+            const int bsCount = static_cast<int>(utf8::length(deletedPart));
+            if (autofillOffset) {
+                int surrLen       = static_cast<int>(utf8::length(surrounding.text()));
+                int realLen       = static_cast<int>(cur);
+                int suggestionLen = surrLen - realLen;
+                // delete suggestion tail
+                if (suggestionLen > 0)
+                    ic_->deleteSurroundingText(0, 1);
+                // delete addedPart
+                if (bsCount > 0)
+                    ic_->deleteSurroundingText(-bsCount, static_cast<unsigned int>(bsCount));
+            } else {
+                if (bsCount > 0) {
+                    ic_->deleteSurroundingText(-bsCount, static_cast<unsigned int>(bsCount));
+                }
+            }
+            ic_->commitString(addedPart);
+            //clearAllBuffers();
+            return true;
+        } else {
+            replacement_thread_id_.store(my_id, std::memory_order_release);
+            replacement_start_ms_.store(now_ms(), std::memory_order_release);
+            is_deleting_.store(true, std::memory_order_release);
+            monitor_cv.notify_one();
+            send_backspace_uinput(expected_backspaces_);
+            LOTUS_INFO("Send " + std::to_string(expected_backspaces_) + " backspaces");
+        }
+        return false;
     }
 
     bool LotusState::checkForwardSpecialKey(KeyEvent& keyEvent, KeySym& currentSym) {
@@ -600,19 +625,20 @@ namespace fcitx {
             compareAndSplitStrings(oldPreBuffer_, commitStr, commonPrefix, deletedPart, addedPart);
 
             if (!deletedPart.empty()) {
-                performReplacement(deletedPart, addedPart);
                 keyEvent.filterAndAccept();
+                if (performReplacement(deletedPart, addedPart))
+                    keyEvent.forward();
             } else {
                 bool wasAutoCapitalized = (currentSym != keyEvent.rawKey().sym());
                 if (!addedPart.empty() && (keyUtf8 != addedPart || wasAutoCapitalized)) {
                     // Prevent auto-capitalized character replacement from stripping out Vietnamese chars
                     if (addedPart.size() > 1 && addedPart.back() == ' ') {
                         // Stripping the trigger key (space) from addedPart
-#if __cplusplus >= 202002L
+    #if __cplusplus >= 202002L
                         addedPart.resize(addedPart.size() - 1);
-#else
+    #else
                         addedPart = addedPart.substr(0, addedPart.size() - 1);
-#endif
+    #endif
                     }
                     ic_->commitString(addedPart);
                     LOTUS_INFO("Commit: " + addedPart);
@@ -629,7 +655,7 @@ namespace fcitx {
             return;
         }
 
-        if (!processed) {
+          if (!processed) {
             if (checkEmptyPreedit) {
                 UniqueCPtr<char> preeditC(EnginePullPreedit(lotusEngine_.handle()));
                 if (!preeditC || (*preeditC.get() == 0)) {
@@ -682,7 +708,8 @@ namespace fcitx {
                 }
 
                 keyEvent.filterAndAccept();
-                performReplacement(deletedPart, addedPart);
+                if (performReplacement(deletedPart, addedPart))
+                    keyEvent.forward();
                 oldPreBuffer_ = preeditStr;
             }
         }
@@ -1192,6 +1219,7 @@ namespace fcitx {
                         }
                     }
                     performReplacement(deletedPart, addedPart);
+
                     oldPreBuffer_ = preeditStr;
                     return;
                 }
