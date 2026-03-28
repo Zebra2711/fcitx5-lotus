@@ -107,6 +107,7 @@ namespace fcitx {
         bool                    isPrevPunctuation_  = false;
         int64_t                 lastDeactivateTime_ = 0;
         bool                    wa_flag             = false;
+        bool                    surrtp              = false;
 
         /**
          * @brief Connects to the uinput server.
