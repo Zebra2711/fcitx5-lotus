@@ -42,14 +42,14 @@ MODE_EMOJI = 6
 MODE_DEFAULT = -1  # UI special value for "Use Global Default"
 
 MODE_INFO = {
-    MODE_DEFAULT: {"title": _("Default"), "icon": "preferences-system"},
-    MODE_OFF: {"title": _("Off"), "icon": "input-keyboard"},
-    MODE_SMOOTH: {"title": _("Uinput (Smooth)"), "icon": "input-keyboard"},
-    MODE_SLOW: {"title": _("Uinput (Slow)"), "icon": "input-keyboard"},
-    MODE_HARDCORE: {"title": _("Uinput (Hardcore)"), "icon": "input-keyboard"},
-    MODE_SURROUNDING: {"title": _("Surrounding Text"), "icon": "text-field"},
-    MODE_PREEDIT: {"title": _("Preedit"), "icon": "text-field"},
-    MODE_EMOJI: {"title": _("Emoji Picker"), "icon": "face-smile"},
+    MODE_DEFAULT: {"title": "Default", "icon": "preferences-system"},
+    MODE_OFF: {"title": "Off", "icon": "input-keyboard"},
+    MODE_SMOOTH: {"title": "Uinput (Smooth)", "icon": "input-keyboard"},
+    MODE_SLOW: {"title": "Uinput (Slow)", "icon": "input-keyboard"},
+    MODE_HARDCORE: {"title": "Uinput (Hardcore)", "icon": "input-keyboard"},
+    MODE_SURROUNDING: {"title": "Surrounding Text", "icon": "text-field"},
+    MODE_PREEDIT: {"title": "Preedit", "icon": "text-field"},
+    MODE_EMOJI: {"title": "Emoji Picker", "icon": "face-smile"},
 }
 
 
@@ -74,7 +74,7 @@ class ModeCard(QFrame):
         layout.setSpacing(5)
 
         info = MODE_INFO[self.mode]
-        title_label = QLabel(info["title"])
+        title_label = QLabel(_(info["title"]))
         title_label.setObjectName("ModeCardTitle")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setWordWrap(True)
@@ -407,7 +407,7 @@ class ModeManagerPage(QWidget):
             MODE_SURROUNDING, MODE_PREEDIT, MODE_EMOJI
         ]
         for m in global_modes:
-            self.combo_global_mode.addItem(MODE_INFO[m]["title"], MODE_INFO[m]["title"])
+            self.combo_global_mode.addItem(_(MODE_INFO[m]["title"]), MODE_INFO[m]["title"])
             
         self.combo_global_mode.currentIndexChanged.connect(self._on_global_mode_changed)
         global_layout.addWidget(self.combo_global_mode)
@@ -475,7 +475,7 @@ class ModeManagerPage(QWidget):
         config = self.dbus.get_config()
         mode_str = config.get("values", {}).get("Mode", "Uinput (Smooth)")
         self.combo_global_mode.blockSignals(True)
-        idx = self.combo_global_mode.findText(mode_str)
+        idx = self.combo_global_mode.findData(mode_str)
         if idx >= 0:
             self.combo_global_mode.setCurrentIndex(idx)
         self.combo_global_mode.blockSignals(False)
@@ -493,7 +493,7 @@ class ModeManagerPage(QWidget):
 
         for app in sorted(apps_to_show):
             mode = self.app_rules.get(app, MODE_DEFAULT)
-            mode_text = MODE_INFO.get(mode, MODE_INFO[MODE_SMOOTH])["title"]
+            mode_text = _(MODE_INFO.get(mode, MODE_INFO[MODE_SMOOTH])["title"])
             
             item = QListWidgetItem()
             item.setText(f"{app}\n{mode_text}")
@@ -677,14 +677,14 @@ class ModeManagerPage(QWidget):
         """Returns True if the current state differs from the initial loaded state."""
         return (
             self.app_rules != self.original_app_rules
-            or self.combo_global_mode.currentText() != self.original_global_mode
+            or self.combo_global_mode.currentData() != self.original_global_mode
         )
 
     def is_modified_from_default(self):
         """Returns True if the current state differs from the default state."""
         return (
             len(self.app_rules) > 0
-            or self.combo_global_mode.currentText() != "Uinput (Smooth)"
+            or self.combo_global_mode.currentData() != "Uinput (Smooth)"
         )
 
     def do_import(self):
@@ -789,11 +789,11 @@ class ModeManagerPage(QWidget):
 
     def save_data(self):
         try:
-            if self.combo_global_mode.currentText() != self.original_global_mode:
+            if self.combo_global_mode.currentData() != self.original_global_mode:
                 config_data = self.dbus.get_config()
                 if config_data:
                     latest_values = config_data.get("values", {})
-                    latest_values["Mode"] = self.combo_global_mode.currentText()
+                    latest_values["Mode"] = self.combo_global_mode.currentData()
                     self.dbus.set_config(latest_values)
 
             data = []
@@ -802,11 +802,10 @@ class ModeManagerPage(QWidget):
             
             self.dbus.set_sub_config_list("app_rules", "Rules", data)
             self.original_app_rules = self.app_rules.copy()
-            self.original_global_mode = self.combo_global_mode.currentText()
+            self.original_global_mode = self.combo_global_mode.currentData()
 
         except Exception as e:
             print(f"Error saving app rules via DBus: {e}")
 
     def restore_defaults(self):
         self.load_data()
-

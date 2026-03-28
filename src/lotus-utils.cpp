@@ -86,3 +86,10 @@ bool isStartsWith(const std::string& str, const std::string& prefix) {
     return str.substr(0, prefix.size()) == prefix;
 #endif
 }
+
+std::string getFrontendName(fcitx::InputContext* ic) {
+    if (ic == nullptr) {
+        return "unknown";
+    }
+    return ic->frontend();
+}

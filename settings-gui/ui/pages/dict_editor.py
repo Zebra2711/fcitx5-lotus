@@ -244,7 +244,7 @@ class DictEditorPage(BaseEditorPage):
 
             self.initial_state = self._get_current_state()
         except Exception as e:
-            QMessageBox.warning(self, _("Error"), f"Failed to save dictionary: {e}")
+            QMessageBox.warning(self, _("Error"), _("Failed to save dictionary: {}").format(e))
 
     def upsert_row(self, word: str, sort: bool = True):
         if word in self.words:

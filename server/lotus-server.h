@@ -132,11 +132,6 @@ class LibinputContext {
 #define UNIX_PATH_MAX sizeof(((struct sockaddr_un*)0)->sun_path)
 
 /**
- * @brief Uinput device file descriptor.
- */
-extern int uinput_fd_; //NOLINT
-
-/**
  * @brief Global flag to control server running state.
  */
 extern std::atomic<bool> g_running; //NOLINT

@@ -9,6 +9,7 @@
 #include "lotus-state.h"
 #include "lotus-engine.h"
 #include "lotus-candidates.h"
+#include "lotus-utils.h"
 
 #include <cstddef>
 #include <fcitx-utils/log.h>
@@ -99,8 +100,10 @@ namespace fcitx {
             return true;
         }
         LOTUS_ERROR("Failed to connect to socket: " + std::string(strerror(errno)));
-        close(current_fd);
-        uinput_client_fd_ = -1;
+        int old_fd = uinput_client_fd_.exchange(-1);
+        if (old_fd != -1) {
+            close(old_fd);
+        }
         return false;
     }
 
@@ -118,8 +121,10 @@ namespace fcitx {
 
         if (n < 0) {
             LOTUS_WARN("Failed to send backspace: " + std::string(strerror(errno)));
-            close(uinput_client_fd_);
-            uinput_client_fd_ = -1;
+            int old_fd = uinput_client_fd_.exchange(-1);
+            if (old_fd != -1) {
+                close(old_fd);
+            }
             if (connect_uinput_server()) {
                 LOTUS_INFO("Reconnected to uinput server successfully");
                 send(uinput_client_fd_, &count, sizeof(count), MSG_NOSIGNAL);
@@ -483,7 +488,7 @@ namespace fcitx {
             pending_commit_string_   = "";
 
             event.filterAndAccept(); // Filter out the final trigger backspace.
-            if (std::string(ic_->frontend()) == "dbus" && !ic_->surroundingText().isValid())
+            if (getFrontendName(ic_) == "dbus" && !ic_->surroundingText().isValid())
                 replayBufferedKeys(); // Does we need drop this?
             return true;
         }
@@ -510,7 +515,7 @@ namespace fcitx {
         LOTUS_INFO("Send " + std::to_string(expected_backspaces_) + " backspaces");
     }
 
-    void LotusState::checkForwardSpecialKey(KeyEvent& keyEvent, KeySym& currentSym) {
+    bool LotusState::checkForwardSpecialKey(KeyEvent& keyEvent, KeySym& currentSym) {
         if (keyEvent.key().isCursorMove() || currentSym == FcitxKey_Tab || currentSym == FcitxKey_KP_Tab || currentSym == FcitxKey_ISO_Left_Tab || currentSym == FcitxKey_Escape ||
             keyEvent.key().hasModifier()) {
             is_deleting_.store(false, std::memory_order_release);
@@ -520,17 +525,16 @@ namespace fcitx {
             history_.clear();
             ResetEngine(lotusEngine_.handle());
             oldPreBuffer_.clear();
-            keyEvent.forward();
-            return;
+            return true;
         }
 
         if (currentSym == FcitxKey_Delete) {
-            keyEvent.forward();
-            return;
+            return true;
         }
 
         if (currentSym >= FcitxKey_KP_0 && currentSym <= FcitxKey_KP_9) {
             currentSym = static_cast<KeySym>(FcitxKey_0 + (currentSym - FcitxKey_KP_0));
+            return false;
         }
 
         switch (currentSym) {
@@ -568,10 +572,14 @@ namespace fcitx {
             }
             default: break;
         }
+        return false;
     }
 
     void LotusState::handleUinputMode(KeyEvent& keyEvent, KeySym currentSym, bool checkEmptyPreedit) {
-        checkForwardSpecialKey(keyEvent, currentSym);
+        if (checkForwardSpecialKey(keyEvent, currentSym)) {
+            keyEvent.forward();
+            return;
+        }
 
         if (uinput_client_fd_ < 0) {
             setup_uinput();
@@ -722,7 +730,10 @@ namespace fcitx {
     }
 
     void LotusState::handleSurroundingText(KeyEvent& keyEvent, KeySym currentSym) {
-        checkForwardSpecialKey(keyEvent, currentSym);
+        if (checkForwardSpecialKey(keyEvent, currentSym)) {
+            keyEvent.forward();
+            return;
+        }
         auto* ic = keyEvent.inputContext();
         if ((ic == nullptr) || !ic->capabilityFlags().test(CapabilityFlag::SurroundingText)) {
             LOTUS_WARN("Surrounding text not supported");
@@ -926,7 +937,7 @@ namespace fcitx {
             }
             replacement_thread_id_.store(0, std::memory_order_release);
             replacement_start_ms_.store(0, std::memory_order_release);
-            if (std::string(ic_->frontend()) == "dbus" && !ic_->surroundingText().isValid())
+            if (getFrontendName(ic_) == "dbus" && !ic_->surroundingText().isValid())
                 replayBufferedKeys(); // Does we need drop this?
         }
         KeySym currentSym = keyEvent.rawKey().sym();
@@ -1041,7 +1052,6 @@ namespace fcitx {
         if (is_deleting_.load(std::memory_order_acquire)) {
             return;
         }
-        is_deleting_.store(false);
 
         if (lotusEngine_) {
             isPrevSpace_       = false;
@@ -1057,7 +1067,7 @@ namespace fcitx {
             }
             ResetEngine(lotusEngine_.handle());
         }
-        if (std::string(ic_->frontend()) != "dbus")
+        if (getFrontendName(ic_) != "dbus")
             clearAllBuffers();
 
         switch (realMode) {

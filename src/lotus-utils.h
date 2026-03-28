@@ -19,6 +19,7 @@
 #include <atomic>
 #include <sys/un.h>
 #include <fcitx-utils/log.h>
+#include <fcitx/inputcontext.h>
 
 #include "lotus-config.h"
 
@@ -91,6 +92,13 @@ int compareAndSplitStrings(const std::string& A, const std::string& B, std::stri
  * @return True if string starts with prefix.
  */
 bool isStartsWith(const std::string& str, const std::string& prefix);
+
+/**
+ * @brief Get the frontend name from the input context.
+ * @param ic Input context.
+ * @return Frontend name.
+ */
+std::string getFrontendName(fcitx::InputContext* ic);
 
 /**
  * @brief Key event entry for replay buffer.

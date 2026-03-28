@@ -76,9 +76,11 @@ void UinputDevice::send_backspace() {
     ev[0].type  = EV_KEY;
     ev[0].code  = KEY_BACKSPACE;
     ev[0].value = 1; // Press
+    // Zero-initialize ev[1] via {} set this event to SYN_REPORT
     ev[2].type  = EV_KEY;
     ev[2].code  = KEY_BACKSPACE;
     ev[2].value = 0; // Release
+    // Zero-initialize ev[3] via {} set this event to SYN_REPORT
     write(guard_.get(), ev, sizeof(ev));
 }
 

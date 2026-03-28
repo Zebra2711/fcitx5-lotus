@@ -223,8 +223,10 @@ namespace fcitx {
         if (monitor_thread.joinable()) {
             monitor_thread.join();
         }
-        close(uinput_client_fd_);
-        uinput_client_fd_ = -1;
+        int old_fd = uinput_client_fd_.exchange(-1);
+        if (old_fd != -1) {
+            close(old_fd);
+        }
         LOTUS_INFO("Engine destroyed.");
     }
 
@@ -330,7 +332,7 @@ namespace fcitx {
         FCITX_UNUSED(entry);
         auto*                    ic        = event.inputContext();
         const bool               surrvalid = ic->surroundingText().isValid();
-        const bool               is_dbus   = (ic->frontend() != nullptr) && strcmp(ic->frontend(), "dbus") == 0;
+        const bool               is_dbus   = getFrontendName(ic) == "dbus";
         static std::atomic<bool> mouseThreadStarted{false};
         if (!mouseThreadStarted.exchange(true))
             startMouseReset();
@@ -587,7 +589,7 @@ namespace fcitx {
         auto*      ic              = event.inputContext();
         auto*      state           = ic->propertyFor(&factory_);
         const bool surrvalid       = ic->surroundingText().isValid();
-        const bool is_dbus         = (ic->frontend() != nullptr) && strcmp(ic->frontend(), "dbus") == 0;
+        const bool is_dbus         = getFrontendName(ic) == "dbus";
         state->lastDeactivateTime_ = now_ms();
         if (realMode == LotusMode::Preedit && event.type() != EventType::InputContextFocusOut) {
             state->commitBuffer();

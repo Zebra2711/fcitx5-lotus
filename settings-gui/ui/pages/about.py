@@ -195,7 +195,7 @@ class AboutPage(QWidget):
                     current_sys_user = getpass.getuser()
                     process_capture = subprocess.run(
                         ['journalctl', f'-u', f'fcitx5-lotus-server@{current_sys_user}.service', '--no-pager', '-n', '200'],
-                        capture_output=True, text=True
+                        capture_output=True, text=True, timeout=10
                     )
                     log_output_file.write(process_capture.stdout if process_capture.stdout else "No journal entries found.\n")
                 except Exception as journal_ex:

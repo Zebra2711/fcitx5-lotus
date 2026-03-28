@@ -282,7 +282,7 @@ func (e *FcitxBambooEngine) getCommitText(keyVal, state uint32) (string, bool) {
 			if fullSeq := e.preeditor.GetProcessedString(bamboo.VietnameseMode); len(fullSeq) > 0 && getLastRune(fullSeq) == keyRune {
 				// [[ => [
 				var ret = e.getPreeditString()
-				var lastRune = rune(ret[len(ret)-1])
+				var lastRune = getLastRune(ret)
 				var isWordBreakRune = bamboo.IsWordBreakSymbol(lastRune)
 				// TODO: THIS IS HACKING
 				if isWordBreakRune {
