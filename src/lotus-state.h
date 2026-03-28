@@ -104,7 +104,6 @@ namespace fcitx {
         bool                    isPrevSpace_        = false;
         bool                    shouldCapitalize_   = false;
         bool                    isPrevPunctuation_  = false;
-        size_t                  prevSurrSuffixLen_  = 0; ///< Previous suffix length
         int64_t                 lastDeactivateTime_ = 0;
 
         /**

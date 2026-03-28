@@ -162,14 +162,10 @@ namespace fcitx {
         const size_t       textLen = utf8::length(text);
 
         // Fix that surrounding text is delay update
-        const size_t buffLen       = utf8::length(oldPreBuffer_);
-        const size_t pb            = text.find(oldPreBuffer_);
-        size_t       rangeStart    = buffLen >= static_cast<size_t>(cursor) ? 0 : static_cast<size_t>(cursor) - buffLen;
-        size_t       currSuffixLen = textLen > static_cast<size_t>(cursor) ? textLen - static_cast<size_t>(cursor) : 0;
-        if (prevSurrSuffixLen_ != currSuffixLen && cursor < realtextLen.load(std::memory_order_acquire))
-            realtextLen.store(cursor, std::memory_order_release);
-        prevSurrSuffixLen_    = currSuffixLen;
-        const bool sameprefix = pb != std::string::npos && pb >= rangeStart && pb <= static_cast<size_t>(cursor);
+        const size_t buffLen    = utf8::length(oldPreBuffer_);
+        const size_t pb         = text.find(oldPreBuffer_);
+        size_t       rangeStart = buffLen >= static_cast<size_t>(cursor) ? 0 : static_cast<size_t>(cursor) - buffLen;
+        const bool   sameprefix = pb != std::string::npos && pb >= rangeStart && pb <= static_cast<size_t>(cursor);
 
         // Detect browser autofill/autocomplete suggestions via selection.
         if (cursor != anchor) {
@@ -1046,9 +1042,6 @@ namespace fcitx {
         const auto& text        = surrounding.text();
         size_t      textLen     = utf8::length(text);
         realtextLen.store(textLen, std::memory_order_release);
-        if (surrounding.isValid()) {
-            prevSurrSuffixLen_ = textLen > static_cast<size_t>(surrounding.cursor()) ? textLen - static_cast<size_t>(surrounding.cursor()) : 0;
-        }
         if (is_deleting_.load(std::memory_order_acquire)) {
             return;
         }
