@@ -366,21 +366,32 @@ namespace fcitx {
 
         auto* state = ic->propertyFor(&factory_);
 
+        // Workaround for chromium wayland issue where suggestions cause a doubled
+        // first character. Forwarding may prevent BS from being sent
+        // to the client.
+        //
+        // Note that with chromium x11 we can't do anything to fixes this because
+        // it not support surrounding text so can't know when it show suggestions
+        //
+        // TODO: Properly fixes instead ugly WA
+        state->wa_flag = false;
+
         state->waitAck_ = false;
         if (*config_.fixUinputWithAck) {
             if (targetMode == LotusMode::Uinput || targetMode == LotusMode::UinputHC || targetMode == LotusMode::Smooth) {
-                if (is_dbus) {
 #if __cplusplus >= 202002L
-                    std::ranges::transform(appName, appName.begin(), ::tolower);
+                std::ranges::transform(appName, appName.begin(), ::tolower);
 #else
-                    std::transform(appName.begin(), appName.end(), appName.begin(), ::tolower);
+                std::transform(appName.begin(), appName.end(), appName.begin(), ::tolower);
 #endif
-                    for (const auto& ackApp : ack_apps) {
-                        if (appName.find(ackApp) != std::string::npos) {
+                for (const auto& ackApp : ack_apps) {
+                    if (appName.find(ackApp) != std::string::npos) {
+                        if (is_dbus) {
                             state->waitAck_ = true;
                             LOTUS_INFO(ackApp + " detected, waiting for ack");
-                            break;
                         }
+                        state->wa_flag = true;
+                        break;
                     }
                 }
             }

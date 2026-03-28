@@ -11,6 +11,7 @@
 #include "lotus-candidates.h"
 #include "lotus-utils.h"
 #include "lotus.h"
+#include "ack-apps.h"
 
 #include <cstddef>
 #include <fcitx-utils/log.h>
@@ -677,22 +678,30 @@ namespace fcitx {
         std::string      commonPrefix;
         std::string      deletedPart;
         std::string      addedPart;
+
+        if (wa_flag)
+            keyEvent.filterAndAccept();
+
         if (compareAndSplitStrings(oldPreBuffer_, preeditStr, commonPrefix, deletedPart, addedPart) != 0) {
             if (deletedPart.empty()) {
                 bool isCommit           = false;
                 bool wasAutoCapitalized = (currentSym != keyEvent.rawKey().sym());
                 if (!addedPart.empty()) {
-                    oldPreBuffer_ = preeditStr;
-                    if (addedPart != keyUtf8 || wasAutoCapitalized) {
+                    if (wa_flag)
                         ic_->commitString(addedPart);
-                        LOTUS_INFO("Commit: " + addedPart);
-                        keyEvent.filterAndAccept();
-                        isCommit = true;
+                    oldPreBuffer_ = preeditStr;
+                    if (!wa_flag)
+                        if (wasAutoCapitalized || addedPart != keyUtf8) {
+                            LOTUS_INFO("Commit: " + addedPart);
+                            ic_->commitString(addedPart);
+                            keyEvent.filterAndAccept();
+                            isCommit = true;
+                        }
+                }
+                if (!wa_flag)
+                    if (!isCommit) {
+                        keyEvent.forward();
                     }
-                }
-                if (!isCommit) {
-                    keyEvent.forward();
-                }
             } else {
                 if (uinput_client_fd_ < 0) {
                     LOTUS_ERROR("Cannot connect to uinput server, commit rawkey");
@@ -706,8 +715,8 @@ namespace fcitx {
                 if (is_deleting_.load()) {
                     is_deleting_.store(false, std::memory_order_release);
                 }
-
-                keyEvent.filterAndAccept();
+                if (!wa_flag)
+                    keyEvent.filterAndAccept();
                 if (performReplacement(deletedPart, addedPart))
                     keyEvent.forward();
                 oldPreBuffer_ = preeditStr;
