@@ -12,7 +12,7 @@
 #include "lotus-candidates.h"
 #include "lotus-monitor.h"
 #include "lotus-utils.h"
-#include "ack-apps.h"
+#include "app_quirks.h"
 #include <sys/socket.h>
 #include <utility>
 #ifndef DISABLE_VERSION_ACTION
@@ -375,7 +375,7 @@ namespace fcitx {
         //
         // TODO: Properly fixes instead ugly WA
         state->wa_flag  = false;
-        state->surrtp   = true;
+        state->surrtp   = false;
         state->waitAck_ = false;
         if (*config_.fixUinputWithAck) {
             if (targetMode == LotusMode::Uinput || targetMode == LotusMode::UinputHC || targetMode == LotusMode::Smooth) {
@@ -388,7 +388,7 @@ namespace fcitx {
                     if (appName.find(ackApp) != std::string::npos) {
                         if (is_dbus) {
                             state->waitAck_ = true;
-                            LOTUS_INFO(ackApp + " detected, waiting for ack");
+                            LOTUS_INFO(std::string(ackApp) + " detected, waiting for ack");
                         }
                         state->wa_flag = true;
                         break;
@@ -621,7 +621,6 @@ namespace fcitx {
         auto*      state           = ic->propertyFor(&factory_);
         const bool surrvalid       = ic->surroundingText().isValid();
         const bool is_dbus         = getFrontendName(ic) == "dbus";
-        state->lastDeactivateTime_ = now_ms();
         if (realMode == LotusMode::Preedit && event.type() != EventType::InputContextFocusOut) {
             state->commitBuffer();
         } else {
