@@ -201,7 +201,8 @@ namespace fcitx {
         std::atomic<int>        current_thread_id_{0};
         std::string             emojiBuffer_;
         std::vector<EmojiEntry> emojiCandidates_;
-        bool                    waitAck_ = false;
+        bool                    waitAck_           = false;
+        size_t                  prevSurrSuffixLen_ = 0; ///< Previous suffix length
     };
 
 } // namespace fcitx
