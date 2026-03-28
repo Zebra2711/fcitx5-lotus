@@ -455,9 +455,9 @@ namespace fcitx {
             if (surr.isValid() && surr.cursor() == realtextLen.load(std::memory_order_acquire)) {
                 LOTUS_INFO("Skip retry");
             } else {
-                // Retry x3 (2 ms each), khi can (chromium,electron,...)
-                for (int retry = 0; retry < 3; ++retry) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                // Retry x5 (1 ms each), khi can (chromium,electron,...)
+                for (int retry = 0; retry < 5; ++retry) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
                     const auto& surr2 = ic_->surroundingText();
                     if (surr2.isValid() && surr2.cursor() == realtextLen.load(std::memory_order_acquire)) {
                         break;
@@ -471,8 +471,8 @@ namespace fcitx {
             pending_commit_string_   = "";
 
             event.filterAndAccept(); // Filter out the final trigger backspace.
-            if (getFrontendName(ic_) == "dbus" && !ic_->surroundingText().isValid())
-                replayBufferedKeys(); // Does we need drop this?
+            //if (getFrontendName(ic_) == "dbus" && !ic_->surroundingText().isValid())
+            //  replayBufferedKeys(); // Does we need drop this?
             return true;
         }
         return false;
@@ -930,8 +930,8 @@ namespace fcitx {
             }
             replacement_thread_id_.store(0, std::memory_order_release);
             replacement_start_ms_.store(0, std::memory_order_release);
-            if (getFrontendName(ic_) == "dbus" && !ic_->surroundingText().isValid())
-                replayBufferedKeys(); // Does we need drop this?
+            //if (getFrontendName(ic_) == "dbus" && !ic_->surroundingText().isValid())
+            //   replayBufferedKeys(); // Does we need drop this?
         }
         KeySym currentSym = keyEvent.rawKey().sym();
         if (*engine_->config().autoCapitalizeAfterPunctuation && realMode != LotusMode::Off) {
@@ -1123,11 +1123,9 @@ namespace fcitx {
         }
         oldPreBuffer_.clear();
         hasHistory_ = false;
-        if (!is_deleting_.load(std::memory_order_acquire)) {
-            expected_backspaces_     = 0;
-            current_backspace_count_ = 0;
-            pending_commit_string_.clear();
-        }
+        expected_backspaces_     = 0;
+        current_backspace_count_ = 0;
+        pending_commit_string_.clear();
         emojiBuffer_.clear();
         emojiCandidates_.clear();
         buffered_keys_.clear();
@@ -1140,14 +1138,13 @@ namespace fcitx {
     bool LotusState::isEmptyHistory() const {
         return !hasHistory_;
     }
-
+    /*
     void LotusState::replayBufferedKeys() {
         LOTUS_INFO("Starting replay buffered keys");
         if (buffered_keys_.empty()) {
             return;
         }
         auto keys = std::move(buffered_keys_);
-        buffered_keys_.clear();
         for (size_t i = 0; i < keys.size(); ++i) {
             auto        sym     = static_cast<KeySym>(keys[i].sym);
             uint32_t    state   = keys[i].state;
@@ -1234,4 +1231,5 @@ namespace fcitx {
         }
         LOTUS_INFO("Replay buffered keys done");
     }
+*/
 } // namespace fcitx
