@@ -139,6 +139,16 @@ namespace fcitx {
         }
     }
 
+    void LotusState::send_backspace_forward(int count) const {
+        if (count <= 0)
+            return;
+        for (int i = 0; i < count - 1; ++i) {
+            ic_->forwardKey(Key(FcitxKey_BackSpace, KeyState::NoState), false);
+            ic_->forwardKey(Key(FcitxKey_BackSpace, KeyState::NoState), true);
+        }
+        send_backspace_uinput(0); // trigger 1bs to make all bs prev release
+    }
+
     bool LotusState::isAutofillCertain(const SurroundingText& s) {
         if (!s.isValid() || oldPreBuffer_.empty()) {
             return false;
@@ -457,13 +467,14 @@ namespace fcitx {
                 LOTUS_INFO("Skip retry");
             } else {
                 // Retry x5 (1 ms each), khi can (chromium,electron,...)
-                for (int retry = 0; retry < 5; ++retry) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                    const auto& surr2 = ic_->surroundingText();
-                    if (surr2.isValid() && surr2.cursor() == realtextLen.load(std::memory_order_acquire)) {
-                        break;
+                if (waitAck_)
+                    for (int retry = 0; retry < 5; ++retry) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        const auto& surr2 = ic_->surroundingText();
+                        if (surr2.isValid() && surr2.cursor() == realtextLen.load(std::memory_order_acquire)) {
+                            break;
+                        }
                     }
-                }
             }
             ic_->commitString(pending_commit_string_);
             LOTUS_INFO("Commit: " + pending_commit_string_);
@@ -518,6 +529,7 @@ namespace fcitx {
             replacement_start_ms_.store(now_ms(), std::memory_order_release);
             is_deleting_.store(true, std::memory_order_release);
             monitor_cv.notify_one();
+            //send_backspace_forward(expected_backspaces_ - 1);
             send_backspace_uinput(expected_backspaces_);
             LOTUS_INFO("Send " + std::to_string(expected_backspaces_) + " backspaces");
         }

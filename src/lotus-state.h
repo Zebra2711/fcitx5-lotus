@@ -126,7 +126,7 @@ namespace fcitx {
          * @param count Number of backspaces to send.
          */
         void send_backspace_uinput(int count) const;
-
+        void send_backspace_forward(int count) const;
         /**
          * @brief Checks if autofill is certain for surrounding text.
          * @param s The surrounding text.
