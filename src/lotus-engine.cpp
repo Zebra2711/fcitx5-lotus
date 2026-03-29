@@ -580,7 +580,7 @@ namespace fcitx {
         }
 
         if (event.type() == EventType::InputContextFocusOut || event.type() == EventType::InputContextReset) {
-            state->reset();
+            state->reset(event.type() == EventType::InputContextFocusOut);
         }
     }
 
@@ -830,10 +830,11 @@ namespace fcitx {
         FCITX_UNUSED(entry);
         FCITX_UNUSED(inputContext);
         if (!*config_.useLotusIcons) {
+            bool useBlack = *config_.useBlackDefaultIcons;
             switch (realMode) {
-                case LotusMode::Off: return "fcitx-lotus-off-default";
-                case LotusMode::Emoji: return "fcitx-lotus-emoji-default";
-                default: return "fcitx-lotus-default";
+                case LotusMode::Off: return useBlack ? "fcitx-lotus-off-default-black" : "fcitx-lotus-off-default";
+                case LotusMode::Emoji: return useBlack ? "fcitx-lotus-emoji-default-black" : "fcitx-lotus-emoji-default";
+                default: return useBlack ? "fcitx-lotus-default-black" : "fcitx-lotus-default";
             }
         }
         switch (realMode) {

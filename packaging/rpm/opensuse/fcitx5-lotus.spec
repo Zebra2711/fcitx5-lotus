@@ -76,10 +76,16 @@ Vietnamese input method for fcitx5
 %{_datadir}/icons/hicolor/scalable/apps/fcitx-lotus-emoji-default.svg
 %{_datadir}/icons/hicolor/scalable/apps/fcitx-lotus-default.svg
 %{_datadir}/icons/hicolor/scalable/apps/fcitx-lotus-off-default.svg
+%{_datadir}/icons/hicolor/scalable/apps/fcitx-lotus-emoji-default-black.svg
+%{_datadir}/icons/hicolor/scalable/apps/fcitx-lotus-default-black.svg
+%{_datadir}/icons/hicolor/scalable/apps/fcitx-lotus-off-default-black.svg
 
 %{_datadir}/icons/breeze/status/22/fcitx-lotus-default.svg
 %{_datadir}/icons/breeze/status/22/fcitx-lotus-off-default.svg
 %{_datadir}/icons/breeze/status/22/fcitx-lotus-emoji-default.svg
+%{_datadir}/icons/breeze/status/22/fcitx-lotus-default-black.svg
+%{_datadir}/icons/breeze/status/22/fcitx-lotus-off-default-black.svg
+%{_datadir}/icons/breeze/status/22/fcitx-lotus-emoji-default-black.svg
 %{_datadir}/icons/breeze/status/22/fcitx-lotus.svg
 %{_datadir}/icons/breeze/status/22/fcitx-lotus-off.svg
 %{_datadir}/icons/breeze/status/22/fcitx-lotus-emoji.svg
@@ -87,6 +93,9 @@ Vietnamese input method for fcitx5
 %{_datadir}/icons/breeze/status/24/fcitx-lotus-default.svg
 %{_datadir}/icons/breeze/status/24/fcitx-lotus-off-default.svg
 %{_datadir}/icons/breeze/status/24/fcitx-lotus-emoji-default.svg
+%{_datadir}/icons/breeze/status/24/fcitx-lotus-default-black.svg
+%{_datadir}/icons/breeze/status/24/fcitx-lotus-off-default-black.svg
+%{_datadir}/icons/breeze/status/24/fcitx-lotus-emoji-default-black.svg
 %{_datadir}/icons/breeze/status/24/fcitx-lotus.svg
 %{_datadir}/icons/breeze/status/24/fcitx-lotus-off.svg
 %{_datadir}/icons/breeze/status/24/fcitx-lotus-emoji.svg
@@ -94,6 +103,9 @@ Vietnamese input method for fcitx5
 %{_datadir}/icons/breeze-dark/status/22/fcitx-lotus-default.svg
 %{_datadir}/icons/breeze-dark/status/22/fcitx-lotus-off-default.svg
 %{_datadir}/icons/breeze-dark/status/22/fcitx-lotus-emoji-default.svg
+%{_datadir}/icons/breeze-dark/status/22/fcitx-lotus-default-black.svg
+%{_datadir}/icons/breeze-dark/status/22/fcitx-lotus-off-default-black.svg
+%{_datadir}/icons/breeze-dark/status/22/fcitx-lotus-emoji-default-black.svg
 %{_datadir}/icons/breeze-dark/status/22/fcitx-lotus.svg
 %{_datadir}/icons/breeze-dark/status/22/fcitx-lotus-off.svg
 %{_datadir}/icons/breeze-dark/status/22/fcitx-lotus-emoji.svg
@@ -101,6 +113,9 @@ Vietnamese input method for fcitx5
 %{_datadir}/icons/breeze-dark/status/24/fcitx-lotus-default.svg
 %{_datadir}/icons/breeze-dark/status/24/fcitx-lotus-off-default.svg
 %{_datadir}/icons/breeze-dark/status/24/fcitx-lotus-emoji-default.svg
+%{_datadir}/icons/breeze-dark/status/24/fcitx-lotus-default-black.svg
+%{_datadir}/icons/breeze-dark/status/24/fcitx-lotus-off-default-black.svg
+%{_datadir}/icons/breeze-dark/status/24/fcitx-lotus-emoji-default-black.svg
 %{_datadir}/icons/breeze-dark/status/24/fcitx-lotus.svg
 %{_datadir}/icons/breeze-dark/status/24/fcitx-lotus-off.svg
 %{_datadir}/icons/breeze-dark/status/24/fcitx-lotus-emoji.svg

@@ -1037,7 +1037,7 @@ namespace fcitx {
         }
     }
 
-    void LotusState::reset() {
+    void LotusState::reset(bool isFocusOut) {
         const auto& surrounding = ic_->surroundingText();
         const auto& text        = surrounding.text();
         size_t      textLen     = utf8::length(text);
@@ -1050,7 +1050,7 @@ namespace fcitx {
             isPrevSpace_       = false;
             shouldCapitalize_  = false;
             isPrevPunctuation_ = false;
-            if (realMode == LotusMode::Preedit) {
+            if (realMode == LotusMode::Preedit && isFocusOut) {
                 EngineCommitPreedit(lotusEngine_.handle());
                 UniqueCPtr<char> commit(EnginePullCommit(lotusEngine_.handle()));
                 if (commit && (*commit.get() != 0)) {

@@ -64,8 +64,9 @@ namespace fcitx {
 
         /**
          * @brief Resets the input state.
+         * @param isFocusOut If true, indicates the reset is due to a focus-out event, which may trigger committing the preedit text.
          */
-        void reset();
+        void reset(bool isFocusOut = false);
 
         /**
          * @brief Commits the current buffer.
