@@ -18,6 +18,7 @@
 #include "lotus-config.h"
 #include "emoji.h"
 #include "lotus.h"
+#include <mutex>
 #include <fcitx-config/iniparser.h>
 #include <fcitx/action.h>
 #include <fcitx/addonfactory.h>
@@ -216,11 +217,14 @@ namespace fcitx {
         std::vector<SimpleAction*>                 toggleActions_;
         std::vector<ScopedConnection>              connections_;
         CGoObject                                  dictionary_;
-        bool                                       isGnome_;
+        std::unordered_map<std::string, LotusMode> appRules_;
+        std::string                                appRulesPath_;
         bool                                       isSelectingAppMode_ = false;
         std::string                                currentConfigureApp_;
         FCITX_ADDON_DEPENDENCY_LOADER(emoji, instance_->addonManager());
         std::unique_ptr<EmojiLoader> emojiLoader_;
+        bool                         isGnome_ = false;
+        mutable std::mutex           appRulesMutex_;
 
         /**
          * @brief Refreshes the bamboo engine with current settings.

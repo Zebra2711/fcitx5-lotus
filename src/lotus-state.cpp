@@ -388,7 +388,7 @@ namespace fcitx {
         {
             std::string utf8Char = Key::keySymToUTF8(currentSym);
             if (!utf8Char.empty()) {
-                emojiBuffer_ += utf8Char;
+                emojiBuffer_.append(utf8Char);
                 keyEvent.filterAndAccept();
                 updateEmojiPreedit();
             } else {

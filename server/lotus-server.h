@@ -149,6 +149,13 @@ void signal_handler(int sig);
 std::string get_current_username();
 
 /**
+ * @brief Gets the UID for a given username.
+ * @param username Username to resolve.
+ * @return UID of the user, or (uid_t)-1 if not found.
+ */
+uid_t get_uid_for_user(const std::string& username);
+
+/**
  * @brief Boosts process priority for real-time responsiveness.
  */
 void boost_process_priority();

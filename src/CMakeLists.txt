@@ -22,6 +22,9 @@ target_link_libraries(lotus
 target_include_directories(lotus PRIVATE
     ${PROJECT_BINARY_DIR}
 )
+target_compile_definitions(lotus PRIVATE
+    FCITX5_LOTUS_SETTINGS_PATH=\"${CMAKE_INSTALL_FULL_BINDIR}/fcitx5-lotus-settings\"
+)
 install(TARGETS lotus DESTINATION "${CMAKE_INSTALL_LIBDIR}/fcitx5")
 
 fcitx5_translate_desktop_file(lotus.conf.in lotus.conf)
