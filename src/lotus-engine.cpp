@@ -619,10 +619,10 @@ namespace fcitx {
     }
 
     void LotusEngine::deactivate(const InputMethodEntry& /*entry*/, InputContextEvent& event) {
-        auto*      ic              = event.inputContext();
-        auto*      state           = ic->propertyFor(&factory_);
-        const bool surrvalid       = ic->surroundingText().isValid();
-        const bool is_dbus         = getFrontendName(ic) == "dbus";
+        auto*      ic        = event.inputContext();
+        auto*      state     = ic->propertyFor(&factory_);
+        const bool surrvalid = ic->surroundingText().isValid();
+        const bool is_dbus   = getFrontendName(ic) == "dbus";
         if (realMode == LotusMode::Preedit && event.type() != EventType::InputContextFocusOut) {
             state->commitBuffer();
         } else {
