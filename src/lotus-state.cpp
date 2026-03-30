@@ -117,9 +117,7 @@ namespace fcitx {
             LOTUS_ERROR("Cannot send backspace since cannot connect to uinput server");
             return;
         }
-
         ssize_t n = send(uinput_client_fd_, &count, sizeof(count), MSG_NOSIGNAL);
-
         if (n < 0) {
             LOTUS_WARN("Failed to send backspace: " + std::string(strerror(errno)));
             int old_fd = uinput_client_fd_.exchange(-1);
@@ -490,12 +488,23 @@ namespace fcitx {
 
     bool LotusState::performReplacement(const std::string& deletedPart, const std::string& addedPart) {
         LOTUS_INFO("Perform replacement: " + deletedPart + " -> " + addedPart); //NOLINT
-        int my_id                  = ++current_thread_id_;
-        current_backspace_count_   = 0;
-        pending_commit_string_     = addedPart;
-        const auto& surrounding    = ic_->surroundingText();
-        int         autofillOffset = isAutofillCertain(surrounding) ? 1 : 0;
-        expected_backspaces_       = static_cast<int>(utf8::length(deletedPart)) + 1 + autofillOffset;
+        int my_id                = ++current_thread_id_;
+        current_backspace_count_ = 0;
+        pending_commit_string_   = addedPart;
+        const auto& surrounding  = ic_->surroundingText();
+        LOTUS_INFO("surroundingText: \"" + surrounding.text() + "\"");
+        int autofillOffset = isAutofillCertain(surrounding) ? 1 : 0;
+        // This is bushjt wa
+        if (wa_flag && !autofillOffset) {
+            if (surrounding.isValid())
+                everHadValidSurr_ = true;
+            bool surroundingCapable = ic_->capabilityFlags().test(CapabilityFlag::SurroundingText);
+            if (!everHadValidSurr_ && surroundingCapable && !oldPreBuffer_.empty())
+                autofillOffset = 1;
+        }
+
+        LOTUS_INFO("surroundingText: \"" + surrounding.text() + "\"");
+        expected_backspaces_ = static_cast<int>(utf8::length(deletedPart)) + 1 + autofillOffset;
         // Use deleteSurroundingText for apps that support it for smooth typing
         if (surrtp // Lmfao, only this work :>
             && surrounding.isValid() && ic_->capabilityFlags().test(CapabilityFlag::SurroundingText) &&
@@ -692,6 +701,7 @@ namespace fcitx {
         if (wa_chromium_flag)
             keyEvent.filterAndAccept();
 
+        LOTUS_INFO("surroundingText: \"" + ic_->surroundingText().text() + "\"");
         if (compareAndSplitStrings(oldPreBuffer_, preeditStr, commonPrefix, deletedPart, addedPart) != 0) {
             if (deletedPart.empty()) {
                 bool isCommit           = false;
@@ -1157,6 +1167,7 @@ namespace fcitx {
         buffered_keys_.clear();
         shouldCapitalize_  = false;
         isPrevPunctuation_ = false;
+        everHadValidSurr_  = false;
         if (lotusEngine_)
             ResetEngine(lotusEngine_.handle());
     }

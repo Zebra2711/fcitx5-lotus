@@ -108,6 +108,7 @@ namespace fcitx {
         int64_t                 lastDeactivateTime_ = 0;
         bool                    wa_chromium_flag    = false;
         bool                    surrtp              = false;
+        bool                    everHadValidSurr_   = false;
 
         /**
          * @brief Connects to the uinput server.
