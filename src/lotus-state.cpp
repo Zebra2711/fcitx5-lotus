@@ -11,7 +11,6 @@
 #include "lotus-candidates.h"
 #include "lotus-utils.h"
 #include "lotus.h"
-#include "ack-apps.h"
 
 #include <cstddef>
 #include <fcitx-utils/log.h>
@@ -646,11 +645,11 @@ namespace fcitx {
                     // Prevent auto-capitalized character replacement from stripping out Vietnamese chars
                     if (addedPart.size() > 1 && addedPart.back() == ' ') {
                         // Stripping the trigger key (space) from addedPart
-    #if __cplusplus >= 202002L
+#if __cplusplus >= 202002L
                         addedPart.resize(addedPart.size() - 1);
-    #else
+#else
                         addedPart = addedPart.substr(0, addedPart.size() - 1);
-    #endif
+#endif
                     }
                     ic_->commitString(addedPart);
                     LOTUS_INFO("Commit: " + addedPart);
@@ -667,7 +666,7 @@ namespace fcitx {
             return;
         }
 
-          if (!processed) {
+        if (!processed) {
             if (checkEmptyPreedit) {
                 UniqueCPtr<char> preeditC(EnginePullPreedit(lotusEngine_.handle()));
                 if (!preeditC || (*preeditC.get() == 0)) {
@@ -1135,7 +1134,7 @@ namespace fcitx {
             return;
         }
         oldPreBuffer_.clear();
-        hasHistory_ = false;
+        hasHistory_              = false;
         expected_backspaces_     = 0;
         current_backspace_count_ = 0;
         pending_commit_string_.clear();
