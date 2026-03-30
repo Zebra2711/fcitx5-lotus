@@ -298,13 +298,14 @@ class KeymapEditorPage(BaseEditorPage):
         for action_code, action_name in BAMBOO_ACTIONS:
             self.combo_action.addItem(action_name, action_code)
 
-        btn_add = QPushButton(QIcon.fromTheme("list-add"), _("Add"))
-        btn_add.setToolTip(_("Add / Update Keymap"))
-        btn_add.clicked.connect(self.on_add)
+        self.btn_add = QPushButton(QIcon.fromTheme("list-add"), _("Add"))
+        self.btn_add.setToolTip(_("Add Keymap"))
+        self.btn_add.clicked.connect(self.on_add)
+        self.input_key.textChanged.connect(self._update_add_button_icon)
 
         input_layout.addWidget(self.input_key)
         input_layout.addWidget(self.combo_action)
-        input_layout.addWidget(btn_add)
+        input_layout.addWidget(self.btn_add)
         editor_layout.addLayout(input_layout)
 
         # Table
@@ -420,22 +421,58 @@ class KeymapEditorPage(BaseEditorPage):
             self.table.setRowHidden(row, search_text not in key and search_text not in action)
 
     def on_add(self):
-        """Adds a new keymap entry."""
+        """Adds or updates a keymap entry."""
         key = self.input_key.text().strip()
         if not key:
             return
 
-        # Check for update
-        for row in range(self.table.rowCount()):
-            item = self.table.item(row, 0)
-            if item and item.text() == key:
-                combo = self.table.cellWidget(row, 1)
-                if combo:
-                    combo.setCurrentIndex(self.combo_action.currentIndex())
-                return
+        self.upsert_row(key, self.combo_action.currentData())
+        self.input_key.clear()
+        self.input_key.setFocus()
 
-        self._add_row(key, self.combo_action.currentData())
+    def upsert_row(self, key: str, action_code: str):
+        """Adds or updates a row in the keymap table."""
+        row = self._find_row_by_key(key)
+        if row is not None:
+            # Update existing
+            cell_combo = self.table.cellWidget(row, 1)
+            if cell_combo:
+                idx = cell_combo.findData(action_code)
+                if idx >= 0:
+                    cell_combo.setCurrentIndex(idx)
+            self._on_item_changed()
+            return
+
+        # Insert new
+        self._add_row(key, action_code)
+        self.on_search_changed()
+        self.update_button_states()
         self._on_item_changed()
+
+    def _find_row_by_key(self, key: str) -> int | None:
+        """Finds row index for a given key. Returns None if not found."""
+        for r in range(self.table.rowCount()):
+            item = self.table.item(r, 0)
+            if item and item.text() == key:
+                return r
+        return None
+
+    def _update_add_button_icon(self, *_args):
+        """Changes the Add button icon to Update if key exists."""
+        key = self.input_key.text().strip()
+
+        # Disable button if key is empty
+        self.btn_add.setEnabled(bool(key))
+
+        found = self._find_row_by_key(key) is not None
+        if found:
+            self.btn_add.setIcon(QIcon.fromTheme("document-save"))
+            self.btn_add.setText(_("Update"))
+            self.btn_add.setToolTip(_("Update Keymap"))
+        else:
+            self.btn_add.setIcon(QIcon.fromTheme("list-add"))
+            self.btn_add.setText(_("Add"))
+            self.btn_add.setToolTip(_("Add Keymap"))
 
     def on_load_preset(self):
         """Loads a predefined set of keymaps."""

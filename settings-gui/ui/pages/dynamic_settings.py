@@ -40,7 +40,7 @@ SETTINGS_MAP = {
         "INPUT METHOD": ["InputMethod", "Mode", "OutputCharset"],
     },
     SettingsCategory.APPEARANCE: {
-        "THEME & ICONS": ["UseLotusIcons"],
+        "THEME & ICONS": ["UseLotusIcons", "UseBlackDefaultIcons"],
     },
     SettingsCategory.TYPING: {
         "SPELLING & CORRECTIONS": ["SpellCheck", "AutoNonVnRestore", "DdFreeStyle"],

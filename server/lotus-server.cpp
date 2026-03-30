@@ -110,8 +110,32 @@ void signal_handler(int sig) {
 }
 
 std::string get_current_username() {
-    struct passwd* pw = getpwuid(getuid());
-    return (pw != nullptr) ? pw->pw_name : "unknown";
+    struct passwd  pwd{};
+    struct passwd* result   = nullptr;
+    long           buf_size = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (buf_size == -1) {
+        buf_size = 16384;
+    }
+    std::vector<char> buf(buf_size);
+    std::string       username;
+    int               res = getpwuid_r(getuid(), &pwd, buf.data(), buf_size, &result);
+    if (res == 0 && result != nullptr) {
+        username = result->pw_name;
+    } else {
+        username = "unknown";
+    }
+    return username;
+}
+
+uid_t get_uid_for_user(const std::string& username) {
+    struct passwd  pw_buf{};
+    struct passwd* pw = nullptr;
+    char           buf[1024];
+    int            res = getpwnam_r(username.c_str(), &pw_buf, buf, sizeof(buf), &pw);
+    if (res == 0 && pw != nullptr) {
+        return pw->pw_uid;
+    }
+    return (uid_t)-1;
 }
 
 void boost_process_priority() {
@@ -152,6 +176,13 @@ int main(int argc, char* argv[]) {
         target_user = get_current_username();
     }
     LotusLogger::instance().info("Target user: " + target_user);
+
+    uid_t expected_uid = get_uid_for_user(target_user);
+    if (expected_uid == (uid_t)-1) {
+        LotusLogger::instance().error("Failed to find UID for target user: " + target_user);
+        return 1;
+    }
+
     boost_process_priority();
     pin_to_pcore();
 
@@ -261,22 +292,34 @@ int main(int argc, char* argv[]) {
                 socklen_t    len                = sizeof(struct ucred);
                 char         exe_path[PATH_MAX] = {0};
 
+                bool         authorized = false;
                 if (getsockopt(client_fd, SOL_SOCKET, SO_PEERCRED, &cred, &len) == 0) {
-                    char path[64];
-                    snprintf(path, sizeof(path), "/proc/%d/exe", cred.pid);
+                    if (cred.uid == expected_uid) {
+                        char path[64];
+                        snprintf(path, sizeof(path), "/proc/%d/exe", cred.pid);
 
-                    ssize_t ret = readlink(path, exe_path, sizeof(exe_path) - 1);
-                    if (ret != -1) {
-                        exe_path[ret] = '\0'; // NOLINT
+                        ssize_t ret = readlink(path, exe_path, sizeof(exe_path) - 1);
+                        if (ret != -1) {
+                            exe_path[ret] = '\0'; // NOLINT
+                        }
+
+                        if (strcmp(exe_path, "/usr/bin/fcitx5") == 0) {
+                            authorized = true;
+                        } else {
+                            LotusLogger::instance().warn("Unauthorized executable connection attempt to keyboard socket from: " + std::string(exe_path));
+                        }
+                    } else {
+                        LotusLogger::instance().warn("Unauthorized UID connection attempt to keyboard socket from UID: " + std::to_string(cred.uid));
                     }
+                } else {
+                    LotusLogger::instance().warn("Failed to get peer credentials for keyboard socket");
                 }
 
-                if (strcmp(exe_path, "/usr/bin/fcitx5") == 0) {
+                if (authorized) {
                     LotusLogger::instance().info("Fcitx5 connected to keyboard socket (PID: " + std::to_string(cred.pid) + ")");
                     kb_client_fd.reset(client_fd);
                     fds[KB_CLIENT_INDEX].fd = kb_client_fd.get();
                 } else {
-                    LotusLogger::instance().warn("Unauthorized connection attempt from: " + std::string(exe_path));
                     close(client_fd);
                 }
             }

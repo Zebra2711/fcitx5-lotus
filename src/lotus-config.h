@@ -227,6 +227,7 @@ namespace fcitx {
         Option<bool>                                            ddFreeStyle{this, "DdFreeStyle", _("Allow dd To Produce đ When Auto Restore Keys With Invalid Words Is On"), true};
         Option<bool>                                            fixUinputWithAck{this, "FixUinputWithAck", _("Fix Uinput Mode With Ack"), false};
         Option<bool>                                            useLotusIcons{this, "UseLotusIcons", _("Use Lotus Status Icons"), false};
+        Option<bool>                                            useBlackDefaultIcons{this, "UseBlackDefaultIcons", _("Use Black Default Icons"), false};
         Option<bool>                                            enableDictionary{this, "EnableDictionary", _("Enable Custom Dictionary"), false};
         Option<bool>                                            enableCustomKeymap{this, "EnableCustomKeymap", _("Enable Custom Keymap"), false};
         OptionWithAnnotation<std::string, TimeFormatAnnotation> timeFormat{this, "TimeFormat", _("Time Format ($TIME in macro)"), "%H:%M", {}, {}, TimeFormatAnnotation()};

@@ -10,6 +10,8 @@
 
 #include <cstddef>
 #include <fcitx-utils/utf8.h>
+#include <pwd.h>
+#include <unistd.h>
 
 // Global variables
 std::atomic<fcitx::LotusMode> realMode{fcitx::LotusMode::Smooth};
@@ -32,11 +34,24 @@ std::condition_variable       monitor_cv;
 FCITX_DEFINE_LOG_CATEGORY(lotus, "lotus", fcitx::LogLevel::NoLog);
 
 std::string buildSocketPath(const char* base_path_suffix) {
-    const char* username_c = std::getenv("USER");
+    struct passwd  pwd{};
+    struct passwd* result   = nullptr;
+    long           buf_size = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (buf_size == -1) {
+        buf_size = 16384;
+    }
+    std::vector<char> buf(buf_size);
+    std::string       username;
+    int               res = getpwuid_r(getuid(), &pwd, buf.data(), buf_size, &result);
+    if (res == 0 && result != nullptr) {
+        username = result->pw_name;
+    } else {
+        username = "unknown";
+    }
     std::string path;
     path.reserve(32);
     path += "lotussocket-";
-    path += ((username_c != nullptr) ? username_c : "unknown");
+    path += username;
     path += '-';
     path += base_path_suffix;
     const size_t max_socket_path_length = UNIX_PATH_MAX - 1;

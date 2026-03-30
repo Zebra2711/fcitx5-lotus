@@ -15,8 +15,7 @@ namespace fcitx {
     // EmojiCandidateWord implementation
     EmojiCandidateWord::EmojiCandidateWord(Text text, LotusState* state, EmojiEntry entry) : CandidateWord(std::move(text)), state_(state), entry_(std::move(entry)) {}
 
-    void EmojiCandidateWord::select(InputContext* inputContext) const {
-        FCITX_UNUSED(inputContext);
+    void EmojiCandidateWord::select(InputContext* /*inputContext*/) const {
         state_->ic_->commitString(entry_.output);
         LOTUS_INFO("Emoji committed: " + entry_.output);
 

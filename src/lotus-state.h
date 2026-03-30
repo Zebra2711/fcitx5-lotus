@@ -64,8 +64,9 @@ namespace fcitx {
 
         /**
          * @brief Resets the input state.
+         * @param isFocusOut If true, indicates the reset is due to a focus-out event, which may trigger committing the preedit text.
          */
-        void reset();
+        void reset(bool isFocusOut = false);
 
         /**
          * @brief Commits the current buffer.
@@ -81,7 +82,7 @@ namespace fcitx {
          * @brief Checks if history buffer is empty.
          * @return True if no history.
          */
-        bool isEmptyHistory();
+        bool isEmptyHistory() const;
         friend class EmojiCandidateWord;
         friend class LotusEngine;
 
@@ -92,7 +93,7 @@ namespace fcitx {
         InputContext*           ic_;
         CGoObject               lotusEngine_;
         std::string             oldPreBuffer_;
-        std::string             history_;
+        bool                    hasHistory_              = false;
         int                     expected_backspaces_     = 0;
         int                     current_backspace_count_ = 0;
         std::string             pending_commit_string_;
@@ -105,6 +106,7 @@ namespace fcitx {
         bool                    shouldCapitalize_   = false;
         bool                    isPrevPunctuation_  = false;
         int64_t                 lastDeactivateTime_ = 0;
+        bool                    wa_chromium_flag    = false;
 
         /**
          * @brief Connects to the uinput server.
@@ -123,12 +125,6 @@ namespace fcitx {
          * @param count Number of backspaces to send.
          */
         void send_backspace_uinput(int count) const;
-
-        /**
-         * @brief Replays buffer content to the engine.
-         * @param buffer The string buffer to replay.
-         */
-        void replayBufferToEngine(const std::string& buffer);
 
         /**
          * @brief Checks if autofill is certain for surrounding text.
