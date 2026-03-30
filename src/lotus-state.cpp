@@ -661,13 +661,13 @@ namespace fcitx {
                 bool wasAutoCapitalized = (currentSym != keyEvent.rawKey().sym());
                 if (!addedPart.empty()) {
                     oldPreBuffer_ = preeditStr;
-                    if (wa_chromium_flag || wasAutoCapitalized || addedPart != keyUtf8) {
+                    if (wa_chromium_flag) {
+                        ic_->commitString(addedPart);
+                    } else if (wasAutoCapitalized || addedPart != keyUtf8) {
                         ic_->commitString(addedPart);
                         LOTUS_INFO("Commit: " + addedPart);
-                        if (!wa_chromium_flag) {
-                            keyEvent.filterAndAccept();
-                            isCommit = true;
-                        }
+                        keyEvent.filterAndAccept();
+                        isCommit = true;
                     }
                 }
                 if (!wa_chromium_flag && !isCommit) {
