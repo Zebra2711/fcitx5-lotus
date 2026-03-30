@@ -110,8 +110,21 @@ void signal_handler(int sig) {
 }
 
 std::string get_current_username() {
-    struct passwd* pw = getpwuid(getuid());
-    return (pw != nullptr) ? pw->pw_name : "unknown";
+    struct passwd  pwd{};
+    struct passwd* result   = nullptr;
+    long           buf_size = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (buf_size == -1) {
+        buf_size = 16384;
+    }
+    std::vector<char> buf(buf_size);
+    std::string       username;
+    int               res = getpwuid_r(getuid(), &pwd, buf.data(), buf_size, &result);
+    if (res == 0 && result != nullptr) {
+        username = result->pw_name;
+    } else {
+        username = "unknown";
+    }
+    return username;
 }
 
 uid_t get_uid_for_user(const std::string& username) {
