@@ -376,7 +376,6 @@ namespace fcitx {
         // TODO: Properly fixes instead ugly WA
         state->wa_chromium_flag = false;
 
-        state->wa_flag  = false;
         state->surrtp   = false;
         state->waitAck_ = false;
         if (*config_.fixUinputWithAck) {

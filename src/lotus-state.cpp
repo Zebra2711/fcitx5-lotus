@@ -495,7 +495,7 @@ namespace fcitx {
         LOTUS_INFO("surroundingText: \"" + surrounding.text() + "\"");
         int autofillOffset = isAutofillCertain(surrounding) ? 1 : 0;
         // This is bushjt wa
-        if (wa_flag && !autofillOffset) {
+        if (wa_chromium_flag && !autofillOffset) {
             if (surrounding.isValid())
                 everHadValidSurr_ = true;
             bool surroundingCapable = ic_->capabilityFlags().test(CapabilityFlag::SurroundingText);
@@ -715,22 +715,22 @@ namespace fcitx {
                             keyEvent.filterAndAccept();
                             isCommit = true;
                         }
-                }
-                if (!wa_chromium_flag)
-                    if (!isCommit) {
-                        keyEvent.forward();
-                        bool hasMultibyte = false;
-                        for (unsigned char c : oldPreBuffer_)
-                            if (c > 0x7F) {
-                                hasMultibyte = true;
-                                break;
-                            }
-                        if (!hasMultibyte && utf8::length(oldPreBuffer_) > 8) {
-                            ResetEngine(lotusEngine_.handle());
-                            hasHistory_ = false;
-                            oldPreBuffer_.clear();
-                        }
                     }
+                    if (!wa_chromium_flag)
+                        if (!isCommit) {
+                            keyEvent.forward();
+                            bool hasMultibyte = false;
+                            for (unsigned char c : oldPreBuffer_)
+                                if (c > 0x7F) {
+                                    hasMultibyte = true;
+                                    break;
+                                }
+                            if (!hasMultibyte && utf8::length(oldPreBuffer_) > 8) {
+                                ResetEngine(lotusEngine_.handle());
+                                hasHistory_ = false;
+                                oldPreBuffer_.clear();
+                            }
+                        }
                 }
                 if (!wa_chromium_flag && !isCommit) {
                     keyEvent.forward();
