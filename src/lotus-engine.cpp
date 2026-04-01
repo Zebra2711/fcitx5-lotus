@@ -378,7 +378,7 @@ namespace fcitx {
 
         state->waitAck_ = false;
         if (*config_.fixUinputWithAck) {
-            if (targetMode == LotusMode::Uinput || targetMode == LotusMode::UinputHC || targetMode == LotusMode::Smooth) {
+            if (targetMode == LotusMode::Uinput || targetMode == LotusMode::UinputHC || targetMode == LotusMode::Smooth || targetMode == LotusMode::Minecraft) {
 #if __cplusplus >= 202002L
                 std::ranges::transform(appName, appName.begin(), ::tolower);
 #else
@@ -508,6 +508,10 @@ namespace fcitx {
                 }
                 case FcitxKey_4: {
                     selectedMode = LotusMode::SurroundingText;
+                    break;
+                }
+                case FcitxKey_5: {
+                    selectedMode = LotusMode::Minecraft;
                     break;
                 }
                 case FcitxKey_q: {
@@ -828,6 +832,7 @@ namespace fcitx {
         candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::Uinput, _("[2] Uinput (Slow)")), applyMode(LotusMode::Uinput)));
         candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::UinputHC, _("[3] Uinput (Hardcore)")), applyMode(LotusMode::UinputHC)));
         candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::SurroundingText, _("[4] Surrounding Text")), applyMode(LotusMode::SurroundingText)));
+        candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::Minecraft, _("[5] Minecraft")), applyMode(LotusMode::Minecraft)));
         candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::Preedit, _("[q] Preedit")), applyMode(LotusMode::Preedit)));
         candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::Emoji, _("[w] Emoji Picker")), applyMode(LotusMode::Emoji)));
         candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::Off, _("[e] OFF")), applyMode(LotusMode::Off)));
@@ -859,9 +864,10 @@ namespace fcitx {
             case LotusMode::Uinput: selectedIndex = 2; break;
             case LotusMode::UinputHC: selectedIndex = 3; break;
             case LotusMode::SurroundingText: selectedIndex = 4; break;
-            case LotusMode::Preedit: selectedIndex = 5; break;
-            case LotusMode::Emoji: selectedIndex = 6; break;
-            case LotusMode::Off: selectedIndex = 7; break;
+            case LotusMode::Minecraft: selectedIndex = 5; break;
+            case LotusMode::Preedit: selectedIndex = 6; break;
+            case LotusMode::Emoji: selectedIndex = 7; break;
+            case LotusMode::Off: selectedIndex = 8; break;
             default: selectedIndex = 1; break;
         }
         candidateList->setGlobalCursorIndex(selectedIndex);
