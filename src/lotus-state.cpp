@@ -490,6 +490,9 @@ namespace fcitx {
         // between browser autofill and AI ghost text.
         int autofillOffset   = isAutofillCertain(surrounding) ? 1 : 0;
         expected_backspaces_ = static_cast<int>(utf8::length(deletedPart)) + 1 + autofillOffset;
+        if (realMode == LotusMode::Minecraft) {
+            --expected_backspaces_;
+        }
         replacement_thread_id_.store(my_id, std::memory_order_release);
         replacement_start_ms_.store(now_ms(), std::memory_order_release);
         is_deleting_.store(true, std::memory_order_release);
@@ -981,7 +984,8 @@ namespace fcitx {
 
         switch (realMode) {
             case LotusMode::Uinput:
-            case LotusMode::Smooth: {
+            case LotusMode::Smooth:
+            case LotusMode::Minecraft: {
                 handleUinputMode(keyEvent, currentSym, true);
                 break;
             }
@@ -1043,7 +1047,8 @@ namespace fcitx {
             case LotusMode::SurroundingText:
             case LotusMode::Uinput:
             case LotusMode::UinputHC:
-            case LotusMode::Smooth: {
+            case LotusMode::Smooth:
+            case LotusMode::Minecraft: {
                 ic_->inputPanel().reset();
                 break;
             }
@@ -1077,7 +1082,8 @@ namespace fcitx {
             case LotusMode::Uinput:
             case LotusMode::UinputHC:
             case LotusMode::Smooth:
-            case LotusMode::SurroundingText: {
+            case LotusMode::SurroundingText:
+            case LotusMode::Minecraft: {
                 if (lotusEngine_) {
                     ResetEngine(lotusEngine_.handle());
                 }

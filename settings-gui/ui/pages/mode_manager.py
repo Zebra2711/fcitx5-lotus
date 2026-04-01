@@ -39,6 +39,7 @@ MODE_HARDCORE = 3
 MODE_SURROUNDING = 4
 MODE_PREEDIT = 5
 MODE_EMOJI = 6
+MODE_MINECRAFT = 8
 MODE_DEFAULT = -1  # UI special value for "Use Global Default"
 
 MODE_INFO = {
@@ -50,6 +51,7 @@ MODE_INFO = {
     MODE_SURROUNDING: {"title": "Surrounding Text", "icon": "text-field"},
     MODE_PREEDIT: {"title": "Preedit", "icon": "text-field"},
     MODE_EMOJI: {"title": "Emoji Picker", "icon": "face-smile"},
+    MODE_MINECRAFT: {"title": "Minecraft", "icon": "onboard"},
 }
 
 
@@ -404,7 +406,8 @@ class ModeManagerPage(QWidget):
         self.combo_global_mode = QComboBox()
         global_modes = [
             MODE_OFF, MODE_SMOOTH, MODE_SLOW, MODE_HARDCORE,
-            MODE_SURROUNDING, MODE_PREEDIT, MODE_EMOJI
+            MODE_SURROUNDING, MODE_PREEDIT, MODE_EMOJI,
+            MODE_MINECRAFT
         ]
         for m in global_modes:
             self.combo_global_mode.addItem(_(MODE_INFO[m]["title"]), MODE_INFO[m]["title"])
@@ -439,7 +442,8 @@ class ModeManagerPage(QWidget):
             MODE_DEFAULT, MODE_OFF,
             MODE_SMOOTH, MODE_SLOW,
             MODE_HARDCORE, MODE_SURROUNDING,
-            MODE_PREEDIT, MODE_EMOJI
+            MODE_PREEDIT, MODE_EMOJI,
+            MODE_MINECRAFT
         ]
         for i, m in enumerate(grid_modes):
             card = ModeCard(m)

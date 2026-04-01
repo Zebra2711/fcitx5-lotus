@@ -34,6 +34,7 @@ namespace fcitx {
         Preedit         = 5,
         Emoji           = 6,
         NoMode          = 7,
+        Minecraft       = 8,
     };
 
     /**
@@ -50,6 +51,7 @@ namespace fcitx {
             case LotusMode::UinputHC: return "Uinput (Hardcore)";
             case LotusMode::Emoji: return "Emoji Picker";
             case LotusMode::Smooth: return "Uinput (Smooth)";
+            case LotusMode::Minecraft: return "Minecraft";
             default: return "";
         }
     }
@@ -68,6 +70,7 @@ namespace fcitx {
             {"Uinput (Hardcore)", LotusMode::UinputHC},
             {"Emoji Picker", LotusMode::Emoji},
             {"Uinput (Smooth)", LotusMode::Smooth},
+            {"Minecraft", LotusMode::Minecraft},
         };
         auto it = modeMap.find(mode);
         return it != modeMap.end() ? it->second : LotusMode::NoMode;
@@ -153,7 +156,7 @@ namespace fcitx {
          * @brief Initializes with default mode list.
          */
         ModeListAnnotation() {
-            list_ = {"Uinput (Smooth)", "Uinput (Slow)", "Surrounding Text", "Preedit", "Uinput (Hardcore)", "OFF"};
+            list_ = {_("Uinput (Smooth)"), _("Uinput (Slow)"), _("Surrounding Text"), _("Preedit"), _("Uinput (Hardcore)"), _("OFF"), _("Minecraft")};
         }
     };
 
