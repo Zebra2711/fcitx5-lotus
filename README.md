@@ -67,9 +67,9 @@ Nếu bạn muốn tự biên dịch bộ gõ từ mã nguồn để đóng góp
 
 ### Yêu cầu hệ thống
 
-- **Debian/Ubuntu:** `sudo apt-get install cmake extra-cmake-modules libfcitx5core-dev libfcitx5config-dev libfcitx5utils-dev libinput-dev libudev-dev g++ golang hicolor-icon-theme pkg-config libx11-dev fcitx5-modules-dev python3-pyside6.qtwidgets python3-dbus`
-- **Fedora/RHEL:** `sudo dnf install cmake extra-cmake-modules fcitx5-devel libinput-devel libudev-devel gcc-c++ golang hicolor-icon-theme systemd-devel libX11-devel python3-pyside6 python3-dbus`
-- **openSUSE:** `sudo zypper install cmake extra-cmake-modules fcitx5-devel libinput-devel systemd-devel gcc-c++ go hicolor-icon-theme systemd-devel libX11-devel udev python3-pyside6 python3-dbus-python`
+- **Debian/Ubuntu:** `sudo apt-get install cmake extra-cmake-modules libfcitx5core-dev libfcitx5config-dev libfcitx5utils-dev libinput-dev libudev-dev g++ golang hicolor-icon-theme pkg-config libx11-dev fcitx5-modules-dev python3-qtpy python3-dbus`
+- **Fedora/RHEL:** `sudo dnf install cmake extra-cmake-modules fcitx5-devel libinput-devel libudev-devel gcc-c++ golang hicolor-icon-theme systemd-devel libX11-devel python3-pyside6 python3-QtPy python3-dbus`
+- **openSUSE:** `sudo zypper install cmake extra-cmake-modules fcitx5-devel libinput-devel systemd-devel gcc-c++ go hicolor-icon-theme systemd-devel libX11-devel udev python3-pyside6 python3-QtPy python3-dbus-python`
 
 ### Cài đặt
 

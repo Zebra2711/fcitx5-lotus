@@ -5,7 +5,7 @@
 Base class for Table-based editors (Macros, Keymap).
 """
 
-from PySide6.QtWidgets import (
+from qtpy.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
@@ -19,8 +19,8 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
     QFileDialog,
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QIcon
 from i18n import _
 
 

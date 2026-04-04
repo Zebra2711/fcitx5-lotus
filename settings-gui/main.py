@@ -8,9 +8,9 @@ Application entry point.
 
 import sys
 import signal
-from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QTimer
-from PySide6.QtGui import QIcon
+from qtpy.QtWidgets import QApplication
+from qtpy.QtCore import QTimer
+from qtpy.QtGui import QIcon
 from i18n import setup_i18n
 from ui.main_window import LotusSettingsWindow
 

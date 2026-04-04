@@ -7,7 +7,7 @@ Mode Manager Page for per-application input mode configuration.
 
 import os
 import re
-from PySide6.QtWidgets import (
+from qtpy.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
@@ -25,8 +25,8 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QMessageBox,
 )
-from PySide6.QtCore import Qt, QSize, Signal
-from PySide6.QtGui import QIcon
+from qtpy.QtCore import Qt, QSize, Signal
+from qtpy.QtGui import QIcon
 from i18n import _
 from ui.pages.dynamic_settings import CardWidget
 from core.dbus_handler import LotusDBusHandler
@@ -35,7 +35,6 @@ from core.dbus_handler import LotusDBusHandler
 MODE_OFF = 0
 MODE_SMOOTH = 1
 MODE_SLOW = 2
-MODE_HARDCORE = 3
 MODE_SURROUNDING = 4
 MODE_PREEDIT = 5
 MODE_EMOJI = 6
@@ -43,11 +42,10 @@ MODE_MINECRAFT = 8
 MODE_DEFAULT = -1  # UI special value for "Use Global Default"
 
 MODE_INFO = {
-    MODE_DEFAULT: {"title": "Default", "icon": "preferences-system"},
-    MODE_OFF: {"title": "Off", "icon": "input-keyboard"},
+    MODE_DEFAULT: {"title": "Default Typing", "icon": "preferences-system"},
+    MODE_OFF: {"title": "OFF", "icon": "input-keyboard"},
     MODE_SMOOTH: {"title": "Uinput (Smooth)", "icon": "input-keyboard"},
     MODE_SLOW: {"title": "Uinput (Slow)", "icon": "input-keyboard"},
-    MODE_HARDCORE: {"title": "Uinput (Hardcore)", "icon": "input-keyboard"},
     MODE_SURROUNDING: {"title": "Surrounding Text", "icon": "text-field"},
     MODE_PREEDIT: {"title": "Preedit", "icon": "text-field"},
     MODE_EMOJI: {"title": "Emoji Picker", "icon": "face-smile"},
@@ -405,9 +403,9 @@ class ModeManagerPage(QWidget):
         global_layout.addWidget(QLabel(_("Global Default Mode:")))
         self.combo_global_mode = QComboBox()
         global_modes = [
-            MODE_OFF, MODE_SMOOTH, MODE_SLOW, MODE_HARDCORE,
+            MODE_SMOOTH, MODE_SLOW, MODE_MINECRAFT,
             MODE_SURROUNDING, MODE_PREEDIT, MODE_EMOJI,
-            MODE_MINECRAFT
+            MODE_OFF
         ]
         for m in global_modes:
             self.combo_global_mode.addItem(_(MODE_INFO[m]["title"]), MODE_INFO[m]["title"])
@@ -439,11 +437,10 @@ class ModeManagerPage(QWidget):
         self.mode_cards = {}
         
         grid_modes = [
-            MODE_DEFAULT, MODE_OFF,
             MODE_SMOOTH, MODE_SLOW,
-            MODE_HARDCORE, MODE_SURROUNDING,
+            MODE_MINECRAFT, MODE_SURROUNDING,
             MODE_PREEDIT, MODE_EMOJI,
-            MODE_MINECRAFT
+            MODE_OFF, MODE_DEFAULT
         ]
         for i, m in enumerate(grid_modes):
             card = ModeCard(m)
@@ -758,38 +755,6 @@ class ModeManagerPage(QWidget):
             _("Import Complete"),
             _("Imported {} rules, skipped {} invalid lines.").format(imported, skipped),
         )
-
-    def do_export(self):
-        """Exports current app rules to a TSV file."""
-        if not self.app_rules:
-            QMessageBox.information(
-                self, _("Export"), _("The application rules list is empty, nothing to export.")
-            )
-            return
-
-        path, _filter = QFileDialog.getSaveFileName(
-            self,
-            _("Export Application Rules"),
-            "lotus-app-rules.tsv",
-            _("Tab-separated (*.tsv);;Text files (*.txt);;All files (*)"),
-        )
-        if not path:
-            return
-
-        try:
-            with open(path, "w", encoding="utf-8") as f:
-                f.write("# Lotus Application Rules Table\n")
-                f.write("# Format: application_name<TAB>mode_id\n")
-                f.write("# Modes: 0=Off, 1=Uinput(Smooth), 2=Uinput(Slow), 3=Uinput(Hardcore), 4=Surrounding, 5=Preedit, 6=Emoji\n")
-                for app, mode in sorted(self.app_rules.items()):
-                    f.write(f"{app}\t{mode}\n")
-            QMessageBox.information(
-                self,
-                _("Export Complete"),
-                _("Exported {} rules to:\n{}").format(len(self.app_rules), path),
-            )
-        except Exception as e:
-            QMessageBox.warning(self, _("Error"), f"{_('Cannot open file for writing:')} {e}")
 
     def save_data(self):
         try:

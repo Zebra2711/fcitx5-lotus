@@ -1,5 +1,5 @@
 Name:           fcitx5-lotus
-Version:        1.9.0
+Version:        2.0.0
 Release:        1
 Summary:        Vietnamese input method for fcitx5
 License:        GPL-3.0-or-later
@@ -24,6 +24,7 @@ BuildRequires:  libgudev-devel
 %{?systemd_requires}
 Requires:       fcitx5-data
 Requires:       fcitx5
+Requires:       python3-QtPy
 Requires:       python3-pyside6
 Requires:       python3-dbus
 Requires:       hicolor-icon-theme
@@ -164,5 +165,6 @@ fi
 %systemd_postun_with_restart fcitx5-lotus-server@.service
 
 %changelog
-* Wed Apr 1 2026 Nguyen Hoang Ky <nhktmdzhg@gmail.com> - 1.9.0-1
-- Add minecraft mode
+* Sun Apr 5 2026 Nguyen Hoang Ky <nhktmdzhg@gmail.com> - 2.0.0-1
+- Use qtpy UI for configuration
+- Add option to disable mode in mode menu

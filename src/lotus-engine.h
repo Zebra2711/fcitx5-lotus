@@ -189,21 +189,18 @@ namespace fcitx {
         }
 
       private:
-        Instance*                instance_;
-        lotusConfig              config_;
-        lotusCustomKeymap        customKeymap_;
-        lotusCustomKeymap        emptyCustomKeymap_;
+        Instance*                                  instance_;
+        lotusConfig                                config_;
+        lotusCustomKeymap                          customKeymap_;
+        lotusCustomKeymap                          emptyCustomKeymap_;
 
-        lotusMacroTable          macroTables_;
-        CGoObject                macroTableObject_;
-        lotusAppRules            appRulesTables_;
+        lotusMacroTable                            macroTables_;
+        CGoObject                                  macroTableObject_;
+        lotusAppRules                              appRulesTables_;
 
-        FactoryFor<LotusState>   factory_;
-        std::vector<std::string> imNames_;
+        FactoryFor<LotusState>                     factory_;
+        std::vector<std::string>                   imNames_;
 
-#ifndef DISABLE_VERSION_ACTION
-        std::unique_ptr<SimpleAction> versionAction_;
-#endif
         std::unique_ptr<SimpleAction>              charsetAction_;
         std::vector<std::unique_ptr<SimpleAction>> charsetSubAction_;
         std::unique_ptr<Menu>                      charsetMenu_;
@@ -222,9 +219,10 @@ namespace fcitx {
         bool                                       isSelectingAppMode_ = false;
         std::string                                currentConfigureApp_;
         FCITX_ADDON_DEPENDENCY_LOADER(emoji, instance_->addonManager());
-        std::unique_ptr<EmojiLoader> emojiLoader_;
-        bool                         isGnome_ = false;
-        mutable std::mutex           appRulesMutex_;
+        std::unique_ptr<EmojiLoader>          emojiLoader_;
+        bool                                  isGnome_ = false;
+        mutable std::mutex                    appRulesMutex_;
+        std::unordered_map<KeySym, LotusMode> modeMenuMapping_;
 
         /**
          * @brief Refreshes the bamboo engine with current settings.

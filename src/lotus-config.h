@@ -29,7 +29,6 @@ namespace fcitx {
         Off             = 0,
         Smooth          = 1,
         Uinput          = 2,
-        UinputHC        = 3,
         SurroundingText = 4,
         Preedit         = 5,
         Emoji           = 6,
@@ -48,7 +47,6 @@ namespace fcitx {
             case LotusMode::Uinput: return "Uinput (Slow)";
             case LotusMode::SurroundingText: return "Surrounding Text";
             case LotusMode::Preedit: return "Preedit";
-            case LotusMode::UinputHC: return "Uinput (Hardcore)";
             case LotusMode::Emoji: return "Emoji Picker";
             case LotusMode::Smooth: return "Uinput (Smooth)";
             case LotusMode::Minecraft: return "Minecraft";
@@ -67,7 +65,6 @@ namespace fcitx {
             {"Uinput (Slow)", LotusMode::Uinput},
             {"Surrounding Text", LotusMode::SurroundingText},
             {"Preedit", LotusMode::Preedit},
-            {"Uinput (Hardcore)", LotusMode::UinputHC},
             {"Emoji Picker", LotusMode::Emoji},
             {"Uinput (Smooth)", LotusMode::Smooth},
             {"Minecraft", LotusMode::Minecraft},
@@ -156,7 +153,7 @@ namespace fcitx {
          * @brief Initializes with default mode list.
          */
         ModeListAnnotation() {
-            list_ = {_("Uinput (Smooth)"), _("Uinput (Slow)"), _("Surrounding Text"), _("Preedit"), _("Uinput (Hardcore)"), _("OFF"), _("Minecraft")};
+            list_ = {_("Uinput (Smooth)"), _("Uinput (Slow)"), _("Minecraft"), _("Surrounding Text"), _("Preedit"), _("Emoji Picker"), _("OFF")};
         }
     };
 
@@ -227,12 +224,17 @@ namespace fcitx {
         Option<bool> w2u{this, "W2U", _("Type w to Produce ư"), true}; Option<bool> autoNonVnRestore{this, "AutoNonVnRestore", _("Auto Restore Keys With Invalid Words"), true};
         Option<bool>                                                                modernStyle{this, "ModernStyle", _("Use oà, uý (Instead Of òa, úy)"), true};
         Option<bool>                                                                freeMarking{this, "FreeMarking", _("Allow Type With More Freedom"), true};
-        Option<bool>                                            ddFreeStyle{this, "DdFreeStyle", _("Allow dd To Produce đ When Auto Restore Keys With Invalid Words Is On"), true};
-        Option<bool>                                            fixUinputWithAck{this, "FixUinputWithAck", _("Fix Uinput Mode With Ack"), false};
-        Option<bool>                                            useLotusIcons{this, "UseLotusIcons", _("Use Lotus Status Icons"), false};
-        Option<bool>                                            useBlackDefaultIcons{this, "UseBlackDefaultIcons", _("Use Black Default Icons"), false};
-        Option<bool>                                            enableDictionary{this, "EnableDictionary", _("Enable Custom Dictionary"), false};
-        Option<bool>                                            enableCustomKeymap{this, "EnableCustomKeymap", _("Enable Custom Keymap"), false};
+        Option<bool> ddFreeStyle{this, "DdFreeStyle", _("Allow dd To Produce đ When Auto Restore Keys With Invalid Words Is On"), true};
+        Option<bool> fixUinputWithAck{this, "FixUinputWithAck", _("Fix Uinput Mode With Ack"), false};
+        Option<bool> useLotusIcons{this, "UseLotusIcons", _("Use Lotus Status Icons"), false};
+        Option<bool> useBlackDefaultIcons{this, "UseBlackDefaultIcons", _("Use Black Default Icons"), false};
+        Option<bool> enableDictionary{this, "EnableDictionary", _("Enable Custom Dictionary"), false};
+        Option<bool> enableCustomKeymap{this, "EnableCustomKeymap", _("Enable Custom Keymap"), false};
+        Option<bool> showModeSmooth{this, "ShowModeSmooth", _("Show Uinput (Smooth)"), true}; Option<bool> showModeUinput{this, "ShowModeUinput", _("Show Uinput (Slow)"), true};
+        Option<bool>                                                                                       showModeMinecraft{this, "ShowModeMinecraft", _("Show Minecraft"), true};
+        Option<bool> showModeSurroundingText{this, "ShowModeSurroundingText", _("Show Surrounding Text"), true};
+        Option<bool> showModePreedit{this, "ShowModePreedit", _("Show Preedit"), true}; Option<bool> showModeEmoji{this, "ShowModeEmoji", _("Show Emoji Picker"), true};
+        Option<bool> showModeOff{this, "ShowModeOff", _("Show OFF"), true}; Option<bool> showModeDefault{this, "ShowModeDefault", _("Show Default Typing"), true};
         OptionWithAnnotation<std::string, TimeFormatAnnotation> timeFormat{this, "TimeFormat", _("Time Format ($TIME in macro)"), "%H:%M", {}, {}, TimeFormatAnnotation()};
         OptionWithAnnotation<std::string, DateFormatAnnotation> dateFormat{this, "DateFormat", _("Date Format ($DATE in macro)"), "%d/%m/%Y", {}, {}, DateFormatAnnotation()};
         SubConfigOption                                         macroEditor{this, "MacroEditor", _("Macro"), "fcitx://config/addon/lotus/lotus-macro"};

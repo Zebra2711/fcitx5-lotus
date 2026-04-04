@@ -9,7 +9,7 @@ Supports JSON-based backups and selective export/import.
 import os
 import json
 from datetime import datetime
-from PySide6.QtWidgets import (
+from qtpy.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
@@ -22,8 +22,8 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QGroupBox,
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QIcon
 from i18n import _
 from core.dbus_handler import LotusDBusHandler
 from ui.pages.dynamic_settings import CardWidget

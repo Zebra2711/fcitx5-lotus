@@ -9,8 +9,8 @@ convert keysyms to Unicode, and mathematically handle Shift modifiers.
 
 import ctypes
 import ctypes.util
-from PySide6.QtWidgets import QPushButton
-from PySide6.QtCore import Qt, Signal
+from qtpy.QtWidgets import QPushButton
+from qtpy.QtCore import Qt, Signal
 from i18n import _
 
 libxkb = None

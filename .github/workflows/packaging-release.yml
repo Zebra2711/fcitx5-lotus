@@ -14,28 +14,20 @@ jobs:
         include:
           - distro: debian:12
             codename: bookworm
-            enable_qt: 'OFF'
           - distro: debian:13
             codename: trixie
-            enable_qt: 'ON'
           - distro: debian:testing
             codename: testing
-            enable_qt: 'ON'
           - distro: debian:unstable
             codename: sid
-            enable_qt: 'ON'
           - distro: ubuntu:22.04
             codename: jammy
-            enable_qt: 'OFF'
           - distro: ubuntu:24.04
             codename: noble
-            enable_qt: 'OFF'
           - distro: ubuntu:25.04
             codename: plucky
-            enable_qt: 'ON'
           - distro: ubuntu:25.10
             codename: questing
-            enable_qt: 'ON'
 
     runs-on: ubuntu-latest
 
@@ -49,8 +41,6 @@ jobs:
 
       - name: Build DEB
         uses: jtdor/build-deb-action@v1
-        env:
-          DEB_BUILD_PROFILES: ${{ matrix.enable_qt == 'OFF' && 'noqut' || '' }}
         with:
           docker-image: ${{ matrix.distro }}
           buildpackage-opts: --build=binary --no-sign

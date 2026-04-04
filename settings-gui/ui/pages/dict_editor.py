@@ -8,7 +8,7 @@ Implements UI with row reordering and TSV import/export.
 
 import os
 from pathlib import Path
-from PySide6.QtWidgets import (
+from qtpy.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QPushButton,
@@ -22,8 +22,8 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QCheckBox,
 )
-from PySide6.QtGui import QIcon, QColor
-from PySide6.QtCore import Qt
+from qtpy.QtGui import QIcon, QColor
+from qtpy.QtCore import Qt
 from i18n import _
 from core.dbus_handler import LotusDBusHandler
 from ui.pages.base_editor import BaseEditorPage
@@ -389,30 +389,3 @@ class DictEditorPage(BaseEditorPage):
             _("Import Complete"),
             _("Imported {} words.").format(imported),
         )
-
-    def do_export(self):
-        if not self.words:
-            QMessageBox.information(
-                self, _("Export"), _("The custom dictionary is empty, nothing to export.")
-            )
-            return
-        path, _filter = QFileDialog.getSaveFileName(
-            self,
-            _("Export Custom Dictionary"),
-            "lotus-dict.tsv",
-            _("Tab-separated (*.tsv);;Text files (*.txt);;All files (*)"),
-        )
-        if not path:
-            return
-        try:
-            with open(path, "w", encoding="utf-8") as f:
-                f.write("# Lotus Dictionary\n")
-                for word in self.words:
-                    f.write(f"{word}\n")
-            QMessageBox.information(
-                self,
-                _("Export Complete"),
-                _("Exported {} words to:\n{}").format(len(self.words), path),
-            )
-        except (IOError, OSError, UnicodeDecodeError) as e:
-            QMessageBox.warning(self, _("Error"), _("Cannot open file for writing: {}").format(e))

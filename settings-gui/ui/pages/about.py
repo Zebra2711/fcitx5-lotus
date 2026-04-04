@@ -5,10 +5,10 @@ import os
 import subprocess
 import getpass
 import tempfile
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QHBoxLayout, QFrame, 
+from qtpy.QtWidgets import (QWidget, QVBoxLayout, QLabel, QHBoxLayout, QFrame, 
                              QPushButton, QFileDialog, QMessageBox, QGridLayout, QScrollArea)
-from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QIcon, QDesktopServices
+from qtpy.QtCore import Qt, QUrl
+from qtpy.QtGui import QIcon, QDesktopServices
 from i18n import _
 
 try:

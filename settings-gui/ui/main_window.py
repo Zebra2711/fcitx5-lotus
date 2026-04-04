@@ -5,7 +5,7 @@
 Main window assembling all configuration tabs with a modern layout.
 """
 
-from PySide6.QtWidgets import (
+from qtpy.QtWidgets import (
     QMainWindow,
     QWidget,
     QHBoxLayout,
@@ -19,8 +19,8 @@ from PySide6.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
 )
-from PySide6.QtGui import QIcon, QPalette
-from PySide6.QtCore import Qt, QSize, QFile
+from qtpy.QtGui import QIcon, QPalette
+from qtpy.QtCore import Qt, QSize, QFile
 from i18n import _
 from core.dbus_handler import LotusDBusHandler
 
@@ -208,7 +208,7 @@ class LotusSettingsWindow(QMainWindow):
 
     def on_restore_defaults(self):
         """Resets all settings to their default values."""
-        from PySide6.QtWidgets import QMessageBox
+        from qtpy.QtWidgets import QMessageBox
 
         reply = QMessageBox.question(
             self,
@@ -246,7 +246,7 @@ class LotusSettingsWindow(QMainWindow):
         self.btn_cancel.setEnabled(False)
         self.update_reset_button_state()
         if not quiet:
-            from PySide6.QtWidgets import QMessageBox
+            from qtpy.QtWidgets import QMessageBox
 
             QMessageBox.information(
                 self, _("Success"), _("All settings applied successfully.")

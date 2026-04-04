@@ -15,9 +15,6 @@
 #include "ack-apps.h"
 #include <sys/socket.h>
 #include <utility>
-#ifndef DISABLE_VERSION_ACTION
-#include "lotus-version.h"
-#endif
 
 #include <fcitx-config/iniparser.h>
 #include <fcitx/menu.h>
@@ -112,14 +109,6 @@ namespace fcitx {
 
         auto& uiManager = instance_->userInterfaceManager();
 
-#ifndef DISABLE_VERSION_ACTION
-        versionAction_ = std::make_unique<SimpleAction>();
-        versionAction_->setShortText("Lotus " LOTUS_VERSION_STRING);
-        versionAction_->setLongText("Lotus Input Method v" LOTUS_VERSION_STRING);
-        versionAction_->setIcon("help-about");
-        uiManager.registerAction("lotus-version", versionAction_.get());
-#endif
-
         charsetAction_ = std::make_unique<SimpleAction>();
         charsetAction_->setShortText(_("Charset"));
         charsetAction_->setIcon("character-set");
@@ -181,12 +170,8 @@ namespace fcitx {
         instance_->inputContextManager().registerProperty("LotusState", &factory_);
         appRulesPath_ = configDir + "/lotus-app-rules.conf";
         loadAppRules();
-        toggleActions_ = {
-#ifndef DISABLE_VERSION_ACTION
-            versionAction_.get(),
-#endif
-            charsetAction_.get(),          spellCheckAction_.get(),       macroAction_.get(),   capitalizeMacroAction_.get(),
-            autoNonVnRestoreAction_.get(), enableDictionaryAction_.get(), settingsAction_.get()};
+        toggleActions_ = {charsetAction_.get(),          spellCheckAction_.get(),       macroAction_.get(),   capitalizeMacroAction_.get(),
+                          autoNonVnRestoreAction_.get(), enableDictionaryAction_.get(), settingsAction_.get()};
     }
 
     void LotusEngine::initToggleAction(std::unique_ptr<SimpleAction>& action, Option<bool>& option, const std::string& actionId, const std::string& iconName,
@@ -378,7 +363,7 @@ namespace fcitx {
 
         state->waitAck_ = false;
         if (*config_.fixUinputWithAck) {
-            if (targetMode == LotusMode::Uinput || targetMode == LotusMode::UinputHC || targetMode == LotusMode::Smooth || targetMode == LotusMode::Minecraft) {
+            if (targetMode == LotusMode::Uinput || targetMode == LotusMode::Smooth || targetMode == LotusMode::Minecraft) {
 #if __cplusplus >= 202002L
                 std::ranges::transform(appName, appName.begin(), ::tolower);
 #else
@@ -494,60 +479,31 @@ namespace fcitx {
                     }
                     break;
                 }
-                case FcitxKey_1: {
-                    selectedMode = LotusMode::Smooth;
-                    break;
-                }
-                case FcitxKey_2: {
-                    selectedMode = LotusMode::Uinput;
-                    break;
-                }
-                case FcitxKey_3: {
-                    selectedMode = LotusMode::UinputHC;
-                    break;
-                }
-                case FcitxKey_4: {
-                    selectedMode = LotusMode::SurroundingText;
-                    break;
-                }
-                case FcitxKey_5: {
-                    selectedMode = LotusMode::Minecraft;
-                    break;
-                }
-                case FcitxKey_q: {
-                    selectedMode = LotusMode::Preedit;
-                    break;
-                }
-                case FcitxKey_w: {
-                    selectedMode = LotusMode::Emoji;
-                    break;
-                }
-                case FcitxKey_e: {
-                    selectedMode = LotusMode::Off;
-                    break;
-                }
-                case FcitxKey_r: {
-                    selectedMode = modeStringToEnum(config_.mode.value());
-                    break;
-                }
                 case FcitxKey_Escape: {
                     selectionMade = true;
                     break;
                 }
                 default: {
-                    const auto& kl = *config_.modeMenuKey;
-                    if (kl.size() == 1 && !kl[0].hasModifier()) {
-                        std::string charStr = Key::keySymToUTF8(kl[0].sym());
-                        if (!charStr.empty()) {
-                            if (keySym == typeKeyForModeMenuHotkey(kl[0].sym())) {
-                                isSelectingAppMode_ = false;
-                                ic->inputPanel().reset();
-                                ic->updateUserInterface(UserInterfaceComponent::InputPanel);
-                                auto* state = ic->propertyFor(&factory_);
-                                state->commitBuffer();
-                                state->reset();
-                                ic->commitString(charStr);
-                                return;
+                    auto it = modeMenuMapping_.find(keySym);
+                    if (it != modeMenuMapping_.end()) {
+                        selectedMode = it->second;
+                    }
+
+                    if (selectedMode == LotusMode::NoMode) {
+                        const auto& kl = *config_.modeMenuKey;
+                        if (kl.size() == 1 && !kl[0].hasModifier()) {
+                            std::string charStr = Key::keySymToUTF8(kl[0].sym());
+                            if (!charStr.empty()) {
+                                if (keySym == typeKeyForModeMenuHotkey(kl[0].sym())) {
+                                    isSelectingAppMode_ = false;
+                                    ic->inputPanel().reset();
+                                    ic->updateUserInterface(UserInterfaceComponent::InputPanel);
+                                    auto* state = ic->propertyFor(&factory_);
+                                    state->commitBuffer();
+                                    state->reset();
+                                    ic->commitString(charStr);
+                                    return;
+                                }
                             }
                         }
                     }
@@ -558,7 +514,16 @@ namespace fcitx {
             if (selectedMode != LotusMode::NoMode) {
                 LOTUS_INFO("Selected mode: " + modeEnumToString(selectedMode));
                 if (selectedMode != LotusMode::Emoji) {
-                    setAppRule(currentConfigureApp_, selectedMode);
+                    if (keySym == FcitxKey_r) { // Default Typing key (R)
+                        std::lock_guard<std::mutex> lock(appRulesMutex_);
+                        appRules_.erase(currentConfigureApp_);
+                        // Remove from the configuration object too
+                        auto rules = *appRulesTables_.rules;
+                        rules.erase(std::remove_if(rules.begin(), rules.end(), [this](const auto& rule) { return *rule.app == currentConfigureApp_; }), rules.end());
+                        appRulesTables_.rules.setValue(std::move(rules));
+                    } else {
+                        setAppRule(currentConfigureApp_, selectedMode);
+                    }
                     if (!isStartsWith(currentConfigureApp_, "ctx_")) {
                         saveAppRules();
                     }
@@ -588,6 +553,8 @@ namespace fcitx {
             LOTUS_INFO("Mode menu key pressed");
             currentConfigureApp_ = getProgramName(ic);
             g_mouse_clicked.store(false, std::memory_order_release);
+            std::string appName = getProgramName(ic);
+            setMode(getAppRule(appName), ic);
             showAppModeMenu(ic);
             keyEvent.filterAndAccept();
             return;
@@ -827,20 +794,56 @@ namespace fcitx {
             };
         };
 
-        candidateList->append(std::make_unique<DisplayOnlyCandidateWord>(Text(_("App: ") + currentConfigureApp_)));
-        candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::Smooth, _("[1] Uinput (Smooth)")), applyMode(LotusMode::Smooth)));
-        candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::Uinput, _("[2] Uinput (Slow)")), applyMode(LotusMode::Uinput)));
-        candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::UinputHC, _("[3] Uinput (Hardcore)")), applyMode(LotusMode::UinputHC)));
-        candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::SurroundingText, _("[4] Surrounding Text")), applyMode(LotusMode::SurroundingText)));
-        candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::Minecraft, _("[5] Minecraft")), applyMode(LotusMode::Minecraft)));
-        candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::Preedit, _("[q] Preedit")), applyMode(LotusMode::Preedit)));
-        candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::Emoji, _("[w] Emoji Picker")), applyMode(LotusMode::Emoji)));
-        candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(LotusMode::Off, _("[e] OFF")), applyMode(LotusMode::Off)));
+        struct ModeInfo {
+            LotusMode   mode;
+            std::string label;
+            KeySym      key;
+            bool        visible;
+        };
 
-        candidateList->append(std::make_unique<AppModeCandidateWord>(Text(_("[r] Default Typing")), [this, cleanup](InputContext* ic) {
-            setMode(modeStringToEnum(config_.mode.value()), ic);
-            cleanup(ic);
-        }));
+        std::vector<ModeInfo> allModes = {
+            {LotusMode::Smooth, _("Uinput (Smooth)"), FcitxKey_1, *config_.showModeSmooth},
+            {LotusMode::Uinput, _("Uinput (Slow)"), FcitxKey_2, *config_.showModeUinput},
+            {LotusMode::Minecraft, _("Minecraft"), FcitxKey_3, *config_.showModeMinecraft},
+            {LotusMode::SurroundingText, _("Surrounding Text"), FcitxKey_4, *config_.showModeSurroundingText},
+            {LotusMode::Preedit, _("Preedit"), FcitxKey_q, *config_.showModePreedit},
+            {LotusMode::Emoji, _("Emoji Picker"), FcitxKey_w, *config_.showModeEmoji},
+            {LotusMode::Off, _("OFF"), FcitxKey_e, *config_.showModeOff},
+        };
+
+        const LotusMode defaultMode = modeStringToEnum(config_.mode.value());
+        allModes.push_back({defaultMode, _("Default Typing"), FcitxKey_r, *config_.showModeDefault}); // Add reset option
+
+        candidateList->append(std::make_unique<DisplayOnlyCandidateWord>(Text(_("App: ") + currentConfigureApp_)));
+
+        int activeSelectionIdx  = -1;
+        int currentCandidateIdx = 1;
+
+        modeMenuMapping_.clear();
+
+        for (const auto& info : allModes) {
+            if (info.visible) {
+                modeMenuMapping_[info.key] = info.mode;
+
+                std::string keyLabel = "[" + Key::keySymToUTF8(info.key) + "] ";
+                candidateList->append(std::make_unique<AppModeCandidateWord>(getLabel(info.mode, keyLabel + info.label), applyMode(info.mode)));
+
+                if (info.mode == realMode) {
+                    activeSelectionIdx = currentCandidateIdx;
+                } else if (info.mode == defaultMode && info.label == _("Default Typing") && getAppRule(currentConfigureApp_) == defaultMode) {
+                    // This is technically tricky because getAppRule returns the global default if no rule exists.
+                    // If we are at global default, highlight "Default Typing".
+#if __cplusplus >= 202002L
+                    if (!appRules_.contains(currentConfigureApp_)) {
+#else
+                    if (appRules_.find(currentConfigureApp_) == appRules_.end()) {
+#endif
+                        activeSelectionIdx = currentCandidateIdx;
+                    }
+                }
+                currentCandidateIdx++;
+            }
+        }
 
         {
             const auto& kl = *config_.modeMenuKey;
@@ -858,19 +861,11 @@ namespace fcitx {
             }
         }
 
-        int selectedIndex = 1;
-        switch (realMode) {
-            case LotusMode::Smooth: selectedIndex = 1; break;
-            case LotusMode::Uinput: selectedIndex = 2; break;
-            case LotusMode::UinputHC: selectedIndex = 3; break;
-            case LotusMode::SurroundingText: selectedIndex = 4; break;
-            case LotusMode::Minecraft: selectedIndex = 5; break;
-            case LotusMode::Preedit: selectedIndex = 6; break;
-            case LotusMode::Emoji: selectedIndex = 7; break;
-            case LotusMode::Off: selectedIndex = 8; break;
-            default: selectedIndex = 1; break;
+        if (activeSelectionIdx != -1) {
+            candidateList->setGlobalCursorIndex(activeSelectionIdx);
+        } else if (candidateList->totalSize() > 1) {
+            candidateList->setGlobalCursorIndex(1);
         }
-        candidateList->setGlobalCursorIndex(selectedIndex);
 
         ic->inputPanel().reset();
         ic->inputPanel().setCandidateList(std::move(candidateList));
