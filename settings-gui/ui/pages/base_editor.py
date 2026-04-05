@@ -15,9 +15,7 @@ from qtpy.QtWidgets import (
     QHeaderView,
     QMessageBox,
     QLabel,
-    QSizePolicy,
     QAbstractItemView,
-    QFileDialog,
 )
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon

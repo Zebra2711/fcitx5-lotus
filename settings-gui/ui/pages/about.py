@@ -31,7 +31,7 @@ class AboutPage(QWidget):
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        scroll.setAttribute(Qt.WA_TranslucentBackground)
         
         content_widget = QWidget()
         content_widget.setObjectName("AboutContent")

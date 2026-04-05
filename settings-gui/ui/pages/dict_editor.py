@@ -7,7 +7,6 @@ Implements UI with row reordering and TSV import/export.
 """
 
 import os
-from pathlib import Path
 from qtpy.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
@@ -338,54 +337,3 @@ class DictEditorPage(BaseEditorPage):
         self.update_button_states()
         self._on_item_changed()
         self._update_add_button_icon()
-
-    def do_import(self):
-        path, _filter = QFileDialog.getOpenFileName(
-            self,
-            _("Import Custom Dictionary"),
-            "",
-            _("Dictionary files (*.tsv *.txt);;All files (*)"),
-        )
-        if not path:
-            return
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-        except (IOError, OSError, UnicodeDecodeError) as e:
-            QMessageBox.warning(self, _("Error"), _("Cannot open file for reading: {}").format(e))
-            return
-
-        imported = 0
-        confirmed = False
-        for line in lines:
-            word = line.strip()
-            if not word or word.startswith("#"):
-                continue
-
-            if not confirmed and len(self.words) > 0:
-                reply = QMessageBox.question(
-                    self,
-                    _("Confirm Import"),
-                    _(
-                        "The current dictionary is not empty. Imported entries will be merged. Continue?"
-                    ),
-                    QMessageBox.Yes | QMessageBox.No,
-                )
-                if reply == QMessageBox.No:
-                    return
-                confirmed = True
-            else:
-                confirmed = True
-
-            if word not in self.words:
-                self.words.append(word)
-                imported += 1
-
-        self.words.sort()
-        self.on_search_changed()
-
-        QMessageBox.information(
-            self,
-            _("Import Complete"),
-            _("Imported {} words.").format(imported),
-        )

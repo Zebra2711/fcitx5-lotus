@@ -17,7 +17,6 @@ from qtpy.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QLabel,
-    QSizePolicy,
     QAbstractItemView,
     QFileDialog,
     QCheckBox,
@@ -379,35 +378,12 @@ class MacroEditorPage(BaseEditorPage):
             item = self.table.item(row, col)
             if item:
                 item.setBackground(bg_color)
-                item.setData(Qt.ForegroundRole, None)
                 item.setToolTip(tooltip)
                 # Show icon in the first column
                 if col == 0:
                     item.setIcon(icon)
                 else:
                     item.setIcon(QIcon())
-
-    def sort_invalid_to_top(self):
-        """Moves all invalid entries to the top, then sorts by key."""
-        # We'll extract all items, sort them, and put them back.
-        rows = []
-        for row in range(self.table.rowCount()):
-            key = self.table.item(row, 0).text() if self.table.item(row, 0) else ""
-            val = self.table.item(row, 1).text() if self.table.item(row, 1) else ""
-            rows.append((key, val))
-
-        rows.sort(key=lambda x: (not self._is_invalid_macro(x[0]), x[0].lower()))
-
-        self.blockSignals(True)
-        self.table.setRowCount(0)
-        for key, val in rows:
-            row_idx = self.table.rowCount()
-            self.table.insertRow(row_idx)
-            self.table.setItem(row_idx, 0, QTableWidgetItem(key))
-            self.table.setItem(row_idx, 1, QTableWidgetItem(val))
-            self._apply_row_highlight(row_idx, key)
-        self.on_search_changed()  # Re-apply filter
-        self.blockSignals(False)
 
     def on_search_changed(self):
         """Filters the table rows based on the search input."""
@@ -465,58 +441,3 @@ class MacroEditorPage(BaseEditorPage):
         if val_item:
             self.input_val.setText(val_item.text())
         self.update_button_states()
-
-    def do_import(self):
-        path, _filter = QFileDialog.getOpenFileName(
-            self,
-            _("Import Macros"),
-            "",
-            _("Tab-separated (*.tsv *.txt);;All files (*)"),
-        )
-        if not path:
-            return
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-        except (IOError, OSError, UnicodeDecodeError) as e:
-            QMessageBox.warning(self, _("Error"), _("Cannot open file for reading: {}").format(e))
-            return
-
-        imported = skipped = 0
-        confirmed = False
-        for line in lines:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            parts = line.split("\t") if "\t" in line else line.split(",")
-            if len(parts) < 2:
-                skipped += 1
-                continue
-            key, val = parts[0].strip(), parts[1].strip()
-            if not key or not val:
-                skipped += 1
-                continue
-
-            if not confirmed and self.table.rowCount() > 0:
-                reply = QMessageBox.question(
-                    self,
-                    _("Confirm Import"),
-                    _(
-                        "The current macro list is not empty. Imported entries will be merged. Continue?"
-                    ),
-                    QMessageBox.Yes | QMessageBox.No,
-                )
-                if reply == QMessageBox.No:
-                    return
-                confirmed = True
-            else:
-                confirmed = True
-
-            self.upsert_row(key, val)
-            imported += 1
-
-        QMessageBox.information(
-            self,
-            _("Import Complete"),
-            _("Imported {} entries, skipped {} invalid lines.").format(imported, skipped),
-        )

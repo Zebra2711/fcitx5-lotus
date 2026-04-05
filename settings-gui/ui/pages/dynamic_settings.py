@@ -17,7 +17,6 @@ from qtpy.QtWidgets import (
     QComboBox,
     QButtonGroup,
     QGridLayout,
-    QSizePolicy,
 )
 from ui.components import HotkeyCaptureWidget
 from core.dbus_handler import LotusDBusHandler
@@ -248,52 +247,6 @@ class DynamicSettingsPage(QWidget):
         )
         row_layout.addWidget(combo)
         layout.addLayout(row_layout)
-
-    def _render_radio_group(self, item, layout, columns=1):
-        key, type_str, label, default, annotations = item
-        val = str(self.current_values.get(key, default))
-
-        if "Enum" not in annotations:
-            return
-
-        subtitle = QLabel(f"<b>{_(label)}</b>")
-        if label != "Output Charset":
-            layout.addWidget(subtitle)
-
-        enum_dict = annotations.get("Enum", {})
-        sorted_keys = sorted(
-            enum_dict.keys(), key=lambda x: int(x) if str(x).isdigit() else x
-        )
-
-        btn_group = QButtonGroup(self)
-        self.button_groups.append(btn_group)
-
-        grid = QGridLayout()
-        grid.setHorizontalSpacing(40)
-        grid.setVerticalSpacing(8)
-
-        row, col = 0, 0
-        for k in sorted_keys:
-            rb_text = str(enum_dict[k])
-            rb = QRadioButton(_(rb_text))
-
-            rb.setProperty("val_str", rb_text)
-
-            if rb_text == val:
-                rb.setChecked(True)
-
-            btn_group.addButton(rb)
-            grid.addWidget(rb, row, col)
-
-            col += 1
-            if col >= columns:
-                col = 0
-                row += 1
-
-        btn_group.buttonClicked.connect(
-            lambda btn, k=key: self.update_config(k, btn.property("val_str"))
-        )
-        layout.addLayout(grid)
 
     def _render_checkbox(self, item, layout):
         key, type_str, label, default, annotations = item

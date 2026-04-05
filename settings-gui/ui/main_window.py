@@ -17,10 +17,9 @@ from qtpy.QtWidgets import (
     QFrame,
     QPushButton,
     QSpacerItem,
-    QSizePolicy,
 )
 from qtpy.QtGui import QIcon, QPalette
-from qtpy.QtCore import Qt, QSize, QFile
+from qtpy.QtCore import Qt, QSize
 from i18n import _
 from core.dbus_handler import LotusDBusHandler
 
@@ -31,7 +30,6 @@ from ui.pages.keymap_editor import KeymapEditorPage
 from ui.pages.about import AboutPage
 from ui.pages.mode_manager import ModeManagerPage
 from ui.pages.backup import BackupPage
-import os
 
 
 class LotusSettingsWindow(QMainWindow):
