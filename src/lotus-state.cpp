@@ -151,7 +151,7 @@ namespace fcitx {
         // Fix that surrounding text is delay update
         const size_t buffLen    = utf8::length(oldPreBuffer_);
         const size_t pb         = text.find(oldPreBuffer_);
-        size_t       rangeStart = buffLen >= static_cast<size_t>(cursor) ? 0 : static_cast<size_t>(cursor) - buffLen;
+        size_t       rangeStart = static_cast<size_t>(cursor) >= buffLen ? static_cast<size_t>(cursor) - buffLen : 0;
         const bool   sameprefix = pb != std::string::npos && pb >= rangeStart && pb <= static_cast<size_t>(cursor);
 
         // Detect browser autofill/autocomplete suggestions via selection.
@@ -178,7 +178,11 @@ namespace fcitx {
 
         // Heuristic: rapid text growth in a single-line context.
         // Applied only when no newline is present after the cursor to distinguish from AI text in editors.
-        if (textLen > static_cast<size_t>(cursor) && cursor == realtextLen.load(std::memory_order_acquire) && text.find('\n', cursor) == std::string::npos && sameprefix)
+        // Gecko/Firefox: if buffLen > textLen, surrounding text is stale (async update race)
+        if (buffLen > textLen) {
+            return false;
+        }
+        if (textLen > static_cast<size_t>(cursor) + 1 && cursor == realtextLen.load(std::memory_order_acquire) && text.find('\n', cursor) == std::string::npos && sameprefix)
             return true;
 
         for (auto v = realtextLen.load(std::memory_order_acquire); v < cursor && !realtextLen.compare_exchange_weak(v, cursor, std::memory_order_acq_rel);)
